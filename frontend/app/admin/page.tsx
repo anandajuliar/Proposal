@@ -15,8 +15,17 @@ export default function AdminOverviewPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchOverviewData();
-  }, []);
+    // PROTEKSI ROLE
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      if (user.role !== "ADMIN") {
+        router.push("/admin/proposal"); // Lempar user biasa ke form
+      } else {
+        fetchOverviewData();
+      }
+    }
+  }, [router]);
 
   const fetchOverviewData = async () => {
     try {
@@ -26,7 +35,7 @@ export default function AdminOverviewPage() {
         setData(result);
       }
     } catch (error) {
-      console.error("Gagal narik data dari backend:", error);
+      console.error("Gagal narik data:", error);
     } finally {
       setLoading(false);
     }
@@ -40,7 +49,6 @@ export default function AdminOverviewPage() {
     }
   };
 
-  // Fungsi untuk format tanggal persis seperti request kamu (YYYY/MM/DD HH:mm:ss)
   const formatDate = (dateString: string) => {
     if (!dateString) return "-";
     const d = new Date(dateString);
@@ -58,10 +66,10 @@ export default function AdminOverviewPage() {
   return (
     <AuthGuard>
       <div className="min-h-screen bg-white font-serif text-gray-800">
-        {/* NAVBAR */}
         <nav className="flex justify-between items-center p-5 bg-gray-50 border-b border-gray-200 text-sm font-sans sticky top-0">
+          {/* GANTI NAMA BRAND */}
           <div className="font-bold text-[#b0413e] text-lg tracking-wider">
-            ATLANTIS PRESS
+            PUBLISHER PORTAL
           </div>
           <div className="flex gap-10">
             <Link
@@ -87,14 +95,14 @@ export default function AdminOverviewPage() {
             Proceedings organiser environment
           </h1>
 
+          {/* BACKGROUND PADA TOMBOL NEW PROPOSAL */}
           <Link
             href="/admin/proposal"
-            className="text-sm text-[#b0413e] font-bold hover:underline mb-10 inline-block"
+            className="bg-[#b0413e] text-white px-6 py-2 rounded-md hover:bg-[#8e3431] mb-10 inline-block font-bold shadow-md transition-colors"
           >
             + New proceedings proposal
           </Link>
 
-          {/* SECTION 1: PROCEEDINGS */}
           <section className="mb-12">
             <h2 className="text-2xl font-bold text-[#b0413e] mb-1 font-serif">
               Proceedings
@@ -141,7 +149,6 @@ export default function AdminOverviewPage() {
             </table>
           </section>
 
-          {/* SECTION 2: PROPOSALS */}
           <section className="mb-12">
             <h2 className="text-2xl font-bold text-[#b0413e] mb-1 font-serif">
               Proposals
@@ -184,7 +191,6 @@ export default function AdminOverviewPage() {
             </table>
           </section>
 
-          {/* SECTION 3: DRAFT PROPOSALS */}
           <section className="mb-12">
             <h2 className="text-2xl font-bold text-[#b0413e] mb-1 font-serif">
               Draft Proposals

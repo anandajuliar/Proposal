@@ -23,7 +23,7 @@ export default function AuthPage() {
     setLoading(true);
 
     const endpoint = isLogin ? "/auth/login" : "/auth/register";
-    
+
     try {
       const res = await fetch(`http://localhost:3001${endpoint}`, {
         method: "POST",
@@ -56,13 +56,14 @@ export default function AuthPage() {
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center font-sans p-6">
       <div className="bg-white shadow-2xl rounded-lg flex flex-col md:flex-row max-w-4xl w-full overflow-hidden">
-        
         {/* Sisi Kiri: Branding/Info */}
         <div className="md:w-1/2 bg-[#b0413e] p-12 text-white flex flex-col justify-center">
-          <h1 className="text-4xl font-serif font-bold mb-4 tracking-tighter">ATLANTIS PRESS</h1>
+          <h1 className="text-4xl font-serif font-bold mb-4 tracking-tighter">
+            PUBLISHER PORTAL
+          </h1>
           <p className="text-lg opacity-80 font-light">
-            {isLogin 
-              ? "Welcome back! Access your proceedings organiser environment." 
+            {isLogin
+              ? "Welcome back! Access your proceedings organiser environment."
               : "Join us and start submitting your conference proceedings proposal."}
           </p>
           <div className="mt-8 border-t border-white/20 pt-8">
@@ -76,14 +77,18 @@ export default function AuthPage() {
             <h2 className="text-2xl font-bold text-gray-800">
               {isLogin ? "Login" : "Create Account"}
             </h2>
-            <p className="text-sm text-gray-500">Please enter your credentials below.</p>
+            <p className="text-sm text-gray-500">
+              Please enter your credentials below.
+            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold uppercase text-gray-400 mb-1">First Name</label>
+                  <label className="block text-xs font-bold uppercase text-gray-400 mb-1">
+                    First Name
+                  </label>
                   <input
                     type="text"
                     name="firstname"
@@ -93,7 +98,9 @@ export default function AuthPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold uppercase text-gray-400 mb-1">Last Name</label>
+                  <label className="block text-xs font-bold uppercase text-gray-400 mb-1">
+                    Last Name
+                  </label>
                   <input
                     type="text"
                     name="lastname"
@@ -106,7 +113,9 @@ export default function AuthPage() {
             )}
 
             <div>
-              <label className="block text-xs font-bold uppercase text-gray-400 mb-1">Email Address</label>
+              <label className="block text-xs font-bold uppercase text-gray-400 mb-1">
+                Email Address
+              </label>
               <input
                 type="email"
                 name="email"
@@ -117,7 +126,9 @@ export default function AuthPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase text-gray-400 mb-1">Password</label>
+              <label className="block text-xs font-bold uppercase text-gray-400 mb-1">
+                Password
+              </label>
               <input
                 type="password"
                 name="password"

@@ -61,22 +61,20 @@ export default function ProposalFormPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const proposalId = searchParams.get("id");
+  const [userRole, setUserRole] = useState("USER");
 
-  const [formData, setFormData] = useState<any>({
-    // Credentials
+  const initialFormState = {
     credentials_name: "",
     credentials_title: "",
     credentials_email: "",
     credentials_affiliation: "",
     credentials_address: "",
     credentials_phone: "",
-    // Signatory
     signatory_name: "",
     signatory_title: "",
     signatory_email: "",
     signatory_affiliation: "",
     signatory_address: "",
-    // Event Details
     event_name: "",
     acronym: "",
     past_editions: "",
@@ -93,13 +91,11 @@ export default function ProposalFormPage() {
     past_websites: "",
     past_proceedings_links: "",
     indexes: "",
-    // Audience
     audience_undergrad: false,
     audience_grad: false,
     audience_professional: false,
     audience_research: false,
     audience_popular: false,
-    // Editors
     editor1_firstname: "",
     editor1_lastname: "",
     editor1_email: "",
@@ -113,7 +109,6 @@ export default function ProposalFormPage() {
     other_editors: "",
     reviewers_list: "",
     review_type: "",
-    // Paper Selection
     submission_management: "",
     reviewers_per_paper: "",
     expected_submissions: "",
@@ -123,22 +118,38 @@ export default function ProposalFormPage() {
     geographic_dist: "",
     past_metrics: "",
     supplementary: "",
-    // Scope and PC
     topics_cfp: "",
     committee_names: "",
     keynote_info: "",
-    // Print & Plagiarism
     print_ready: false,
     plagiarism_check: false,
     how_learn_ap: "",
-    // Confirmation
     agreement_accepted: false,
     confirmation_correct: false,
-  });
+  };
+
+  const [formData, setFormData] = useState<any>(initialFormState);
 
   useEffect(() => {
+    // Cek Role User
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      setUserRole(user.role);
+    }
+
+    // TARIK DATA DRAFT JIKA ADA ID
     if (proposalId) {
-      // Logic fetch data draft
+      fetch(`http://localhost:3001/admin/proposals/${proposalId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.form_details) {
+            setFormData(data.form_details);
+          }
+        })
+        .catch((err) => console.error("Gagal menarik data draft", err));
+    } else {
+      setFormData(initialFormState); // Reset jika tidak ada ID
     }
   }, [proposalId]);
 
@@ -182,7 +193,12 @@ export default function ProposalFormPage() {
       const result = await res.json();
       if (res.ok) {
         alert(result.message);
-        router.push("/admin");
+        if (userRole === "ADMIN") {
+          router.push("/admin");
+        } else {
+          router.push("/admin/proposal");
+          setFormData(initialFormState);
+        }
       } else {
         alert(`Gagal: ${result.message}`);
       }
@@ -202,15 +218,16 @@ export default function ProposalFormPage() {
   return (
     <AuthGuard>
       <div className="min-h-screen bg-white font-serif text-gray-800 pb-20">
-        {/* NAVBAR */}
         <nav className="flex justify-between items-center p-5 bg-gray-50 border-b border-gray-200 text-sm font-sans sticky top-0 z-10">
           <div className="font-bold text-[#b0413e] text-lg tracking-wider">
-            ATLANTIS PRESS
+            PUBLISHER PORTAL
           </div>
           <div className="flex gap-10">
-            <Link href="/admin" className="hover:text-black">
-              Overview
-            </Link>
+            {userRole === "ADMIN" && (
+              <Link href="/admin" className="hover:text-black">
+                Overview
+              </Link>
+            )}
             <Link
               href="/admin/proposal"
               className="font-bold border-b-2 border-[#b0413e]"
@@ -227,12 +244,26 @@ export default function ProposalFormPage() {
         </nav>
 
         <main className="max-w-4xl mx-auto p-10 font-sans">
-          <Link
-            href="/admin"
-            className="text-sm text-[#b0413e] hover:underline mb-6 inline-block"
-          >
-            ← Back to overview
-          </Link>
+          {/* LOGIC TOMBOL BACK/NEW PROPOSAL BERDASARKAN ROLE */}
+          {userRole === "ADMIN" ? (
+            <Link
+              href="/admin"
+              className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300 mb-6 inline-block font-bold transition-colors"
+            >
+              ← Back to overview
+            </Link>
+          ) : (
+            <button
+              onClick={() => {
+                router.push("/admin/proposal");
+                setFormData(initialFormState);
+              }}
+              className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300 mb-6 inline-block font-bold transition-colors"
+            >
+              + Create New Proposal
+            </button>
+          )}
+
           <h1 className="text-3xl text-[#b0413e] mb-2 font-serif">
             Proceedings proposal
           </h1>
@@ -440,7 +471,7 @@ export default function ProposalFormPage() {
               </div>
 
               <InputGroup
-                label="Expected delivery date of articles to Atlantis Press"
+                label="Expected delivery date of articles to Publisher"
                 name="delivery_date"
                 type="date"
                 hint="You can communicate changes to the expected delivery date at any later stage via Email."
@@ -504,7 +535,7 @@ export default function ProposalFormPage() {
                     <input
                       type="checkbox"
                       name={item.name}
-                      checked={formData[item.name]}
+                      checked={formData[item.name] || false}
                       onChange={handleChange}
                     />
                     {item.label}
@@ -521,7 +552,7 @@ export default function ProposalFormPage() {
               <p className="text-sm text-gray-500 mb-6">
                 Names of the proceedings editor(s), i.e., those ultimately
                 responsible for the contents of the proceedings, whose names are
-                to appear on the AP.com and cover of the proceedings volume as
+                to appear on the portal and cover of the proceedings volume as
                 Editors:
               </p>
 
@@ -769,16 +800,16 @@ export default function ProposalFormPage() {
                 Do you wish to receive print-ready files?
               </p>
               <p className="text-sm text-gray-500 mb-2">
-                Print-ready files: Atlantis Press is able to provide a
-                e-printable file of the whole proceedings books with Rights &
-                Permission all cleared allowing conference organizers to print
-                it with a local printer. (Cost: 1,000 euro).
+                Print-ready files: Publisher is able to provide a e-printable
+                file of the whole proceedings books with Rights & Permission all
+                cleared allowing conference organizers to print it with a local
+                printer. (Cost: 1,000 euro).
               </p>
               <label className="flex items-start gap-3 cursor-pointer">
                 <input
                   type="checkbox"
                   name="print_ready"
-                  checked={formData.print_ready}
+                  checked={formData.print_ready || false}
                   onChange={handleChange}
                   className="mt-1"
                 />
@@ -793,7 +824,7 @@ export default function ProposalFormPage() {
                 Pre-review plagiarism check (optional)
               </h2>
               <p className="text-sm text-gray-500 mb-2">
-                Atlantis Press also provides a service allowing proceedings
+                Publisher also provides a service allowing proceedings
                 organizers to check the submitted papers on plagiarism before
                 they are reviewed by your experts. This way, organizers can
                 avoid reviewing papers that would have been rejected for
@@ -805,13 +836,13 @@ export default function ProposalFormPage() {
                 <input
                   type="checkbox"
                   name="plagiarism_check"
-                  checked={formData.plagiarism_check}
+                  checked={formData.plagiarism_check || false}
                   onChange={handleChange}
                   className="mt-1"
                 />
                 <span className="text-sm">
-                  Yes, I would like Atlantis Press to perform a pre-review
-                  plagiarism check.
+                  Yes, I would like Publisher to perform a pre-review plagiarism
+                  check.
                 </span>
               </label>
             </section>
@@ -822,7 +853,7 @@ export default function ProposalFormPage() {
                 Various
               </h2>
               <label className="block text-sm font-bold text-gray-700 mb-1">
-                How did you learn of Atlantis Press?
+                How did you learn of this Portal?
               </label>
               <select
                 name="how_learn_ap"
@@ -836,8 +867,8 @@ export default function ProposalFormPage() {
                   publication(s)
                 </option>
                 <option value="Advertisement">Advertisement</option>
-                <option value="From Atlantis Press editor">
-                  From Atlantis Press editor: please give the name
+                <option value="From publisher editor">
+                  From publisher editor: please give the name
                 </option>
                 <option value="Internet search">
                   Internet search: please provide keywords you used
@@ -845,8 +876,8 @@ export default function ProposalFormPage() {
                 <option value="From colleagues / peers">
                   From colleagues / peers: please give his/her name
                 </option>
-                <option value="From Atlantis Press website">
-                  From Atlantis Press website
+                <option value="From publisher website">
+                  From publisher website
                 </option>
                 <option value="Other">Other:</option>
               </select>
@@ -861,7 +892,7 @@ export default function ProposalFormPage() {
                 <input
                   type="checkbox"
                   name="agreement_accepted"
-                  checked={formData.agreement_accepted}
+                  checked={formData.agreement_accepted || false}
                   onChange={handleChange}
                   className="mt-1 flex-shrink-0"
                 />
@@ -875,7 +906,7 @@ export default function ProposalFormPage() {
                 </span>
               </label>
               <p className="text-sm text-gray-600 ml-6">
-                Please note that all proceedings articles on the Atlantis Press
+                Please note that all proceedings articles on the Publisher
                 platform are “gold” open access and therefore freely available
                 in perpetuity from the moment of publication with a Creative
                 Commons Attribution License 4.0 attached. Under this model we
@@ -887,7 +918,7 @@ export default function ProposalFormPage() {
                 <input
                   type="checkbox"
                   name="confirmation_correct"
-                  checked={formData.confirmation_correct}
+                  checked={formData.confirmation_correct || false}
                   onChange={handleChange}
                   className="mt-1 flex-shrink-0"
                 />
@@ -897,8 +928,8 @@ export default function ProposalFormPage() {
                   mentioned in this proposal form will be a real conference or
                   workshop where researchers will meet and discuss their work
                   and that all the papers of the proceedings will go through
-                  rigorous peer review process before being sent to Atlantis
-                  Press and that the volume editors will follow the Code of
+                  rigorous peer review process before being sent to the
+                  Publisher and that the volume editors will follow the Code of
                   Conduct.
                 </span>
               </label>
@@ -908,13 +939,13 @@ export default function ProposalFormPage() {
             <div className="flex justify-end gap-4 border-t pt-8">
               <button
                 onClick={() => handleSave(false)}
-                className="px-8 py-2 border border-gray-400 text-gray-700 rounded hover:bg-gray-100 font-bold"
+                className="px-8 py-2 border border-gray-400 text-gray-700 rounded hover:bg-gray-100 font-bold shadow-sm transition-colors"
               >
                 Save as Draft
               </button>
               <button
                 onClick={() => handleSave(true)}
-                className="px-8 py-2 bg-[#b0413e] text-white rounded hover:bg-[#8e3431] font-bold shadow-lg"
+                className="px-8 py-2 bg-[#b0413e] text-white rounded hover:bg-[#8e3431] font-bold shadow-md transition-colors"
               >
                 Submit proposal
               </button>
