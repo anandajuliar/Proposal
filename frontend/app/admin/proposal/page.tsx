@@ -62,6 +62,7 @@ export default function ProposalFormPage() {
   const searchParams = useSearchParams();
   const proposalId = searchParams.get("id");
   const [userRole, setUserRole] = useState("USER");
+  const [user, setUser] = useState<any>(null); // State buat nangkep ID user
 
   const initialFormState = {
     credentials_name: "",
@@ -131,25 +132,28 @@ export default function ProposalFormPage() {
   const [formData, setFormData] = useState<any>(initialFormState);
 
   useEffect(() => {
-    // Cek Role User
+    // Cek Role & Data User
     const userStr = localStorage.getItem("user");
     if (userStr) {
-      const user = JSON.parse(userStr);
-      setUserRole(user.role);
+      const parsedUser = JSON.parse(userStr);
+      setUserRole(parsedUser.role);
+      setUser(parsedUser); // Simpan data user utuh biar bisa dapet ID-nya
     }
 
     // TARIK DATA DRAFT JIKA ADA ID
     if (proposalId) {
-      fetch(`http://localhost:3001/admin/proposals/${proposalId}`)
+      // 🟢 PRODUCTION: fetch(`https://api.contrariusactus.com/api/admin/proposals/${proposalId}`)
+      // 🔵 DEVELOPMENT:
+      fetch(`http://localhost:3001/api/admin/proposals/${proposalId}`)
         .then((res) => res.json())
         .then((data) => {
-          if (data.form_details) {
-            setFormData(data.form_details);
+          if (Object.keys(data).length > 0) {
+            setFormData((prev: any) => ({ ...prev, ...data }));
           }
         })
         .catch((err) => console.error("Gagal menarik data draft", err));
     } else {
-      setFormData(initialFormState); // Reset jika tidak ada ID
+      setFormData(initialFormState);
     }
   }, [proposalId]);
 
@@ -170,8 +174,10 @@ export default function ProposalFormPage() {
       return;
     }
 
+    // MEMASUKKAN id_user KE DALAM PAYLOAD
     const payload = {
       proposal_id: proposalId,
+      id_user: user ? user.id_user : null,
       organizer_name:
         formData.main_organizer || formData.credentials_name || "Unknown",
       event_name: formData.event_name,
@@ -184,7 +190,12 @@ export default function ProposalFormPage() {
       const endpoint = isSubmit
         ? "/admin/proposals/submit"
         : "/admin/proposals/draft";
-      const res = await fetch(`http://localhost:3001${endpoint}`, {
+
+      // 🟢 PRODUCTION: const url = `https://api.contrariusactus.com/api${endpoint}`;
+      // 🔵 DEVELOPMENT:
+      const url = `http://localhost:3001/api${endpoint}`;
+
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -193,17 +204,12 @@ export default function ProposalFormPage() {
       const result = await res.json();
       if (res.ok) {
         alert(result.message);
-        if (userRole === "ADMIN") {
-          router.push("/admin");
-        } else {
-          router.push("/admin/proposal");
-          setFormData(initialFormState);
-        }
+        router.push("/admin");
       } else {
         alert(`Gagal: ${result.message}`);
       }
     } catch (error) {
-      alert("Gagal koneksi ke Backend (Port 3001)!");
+      alert("Gagal koneksi ke Backend!");
     }
   };
 
@@ -219,15 +225,21 @@ export default function ProposalFormPage() {
     <AuthGuard>
       <div className="min-h-screen bg-white font-serif text-gray-800 pb-20">
         <nav className="flex justify-between items-center p-5 bg-gray-50 border-b border-gray-200 text-sm font-sans sticky top-0 z-10">
-          <div className="font-bold text-[#b0413e] text-lg tracking-wider">
-            PUBLISHER PORTAL
+          <div className="font-bold text-[#b0413e] text-lg tracking-wider flex items-center gap-3">
+            <span className="bg-[#b0413e] text-white px-2 py-1 rounded text-sm">
+              CP
+            </span>
+            CONTRARIUS PORTAL
           </div>
-          <div className="flex gap-10">
-            {userRole === "ADMIN" && (
-              <Link href="/admin" className="hover:text-black">
-                Overview
-              </Link>
-            )}
+          <div className="flex gap-10 items-center">
+            {userRole === "ADMIN" || userRole === "SUPER ADMIN" ? (
+              <span className="bg-[#b0413e] text-white px-3 py-1 rounded-full font-bold text-xs">
+                {userRole}
+              </span>
+            ) : null}
+            <Link href="/admin" className="hover:text-black">
+              Overview
+            </Link>
             <Link
               href="/admin/proposal"
               className="font-bold border-b-2 border-[#b0413e]"
@@ -243,31 +255,19 @@ export default function ProposalFormPage() {
           </div>
         </nav>
 
-        <main className="max-w-4xl mx-auto p-10 font-sans">
-          {/* LOGIC TOMBOL BACK/NEW PROPOSAL BERDASARKAN ROLE */}
-          {userRole === "ADMIN" ? (
-            <Link
-              href="/admin"
-              className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300 mb-6 inline-block font-bold transition-colors"
-            >
-              ← Back to overview
-            </Link>
-          ) : (
-            <button
-              onClick={() => {
-                router.push("/admin/proposal");
-                setFormData(initialFormState);
-              }}
-              className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300 mb-6 inline-block font-bold transition-colors"
-            >
-              + Create New Proposal
-            </button>
-          )}
+        {/* DI SINI CONTAINER-NYA DIBIKIN LEGA LAGI SEPERTI KODINGAN AWALMU */}
+        <main className="max-w-6xl mx-auto p-10 font-sans">
+          <Link
+            href="/admin"
+            className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300 mb-6 inline-block font-bold transition-colors"
+          >
+            ← Back to overview
+          </Link>
 
           <h1 className="text-3xl text-[#b0413e] mb-2 font-serif">
             Proceedings proposal
           </h1>
-          <p className="text-sm text-gray-500 mb-8">
+          <p className="text-sm text-gray-500 mb-8 border-b pb-6">
             * Please note that all form fields are mandatory unless stated
             otherwise.
           </p>
@@ -438,7 +438,7 @@ export default function ProposalFormPage() {
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4 items-end">
                 <InputGroup
                   label="City"
                   name="city"
@@ -470,8 +470,9 @@ export default function ProposalFormPage() {
                 />
               </div>
 
+              {/* REVISI NAMA CONTRARIUS */}
               <InputGroup
-                label="Expected delivery date of articles to Publisher"
+                label="Expected delivery date of articles to Contrarius"
                 name="delivery_date"
                 type="date"
                 hint="You can communicate changes to the expected delivery date at any later stage via Email."
@@ -549,11 +550,12 @@ export default function ProposalFormPage() {
               <h2 className="text-xl font-bold text-[#b0413e] mb-4 border-b pb-2">
                 Editors and review
               </h2>
+              {/* REVISI NAMA CONTRARIUS */}
               <p className="text-sm text-gray-500 mb-6">
                 Names of the proceedings editor(s), i.e., those ultimately
                 responsible for the contents of the proceedings, whose names are
-                to appear on the portal and cover of the proceedings volume as
-                Editors:
+                to appear on the Contrarius Portal and cover of the proceedings
+                volume as Editors:
               </p>
 
               <h3 className="font-bold text-sm mb-2 text-[#b0413e]">
@@ -799,8 +801,9 @@ export default function ProposalFormPage() {
               <p className="text-sm font-bold mb-2">
                 Do you wish to receive print-ready files?
               </p>
+              {/* REVISI NAMA CONTRARIUS */}
               <p className="text-sm text-gray-500 mb-2">
-                Print-ready files: Publisher is able to provide a e-printable
+                Print-ready files: Contrarius is able to provide a e-printable
                 file of the whole proceedings books with Rights & Permission all
                 cleared allowing conference organizers to print it with a local
                 printer. (Cost: 1,000 euro).
@@ -823,8 +826,9 @@ export default function ProposalFormPage() {
               <h2 className="text-xl font-bold text-[#b0413e] mb-4 border-b pb-2 mt-8">
                 Pre-review plagiarism check (optional)
               </h2>
+              {/* REVISI NAMA CONTRARIUS */}
               <p className="text-sm text-gray-500 mb-2">
-                Publisher also provides a service allowing proceedings
+                Contrarius also provides a service allowing proceedings
                 organizers to check the submitted papers on plagiarism before
                 they are reviewed by your experts. This way, organizers can
                 avoid reviewing papers that would have been rejected for
@@ -841,8 +845,8 @@ export default function ProposalFormPage() {
                   className="mt-1"
                 />
                 <span className="text-sm">
-                  Yes, I would like Publisher to perform a pre-review plagiarism
-                  check.
+                  Yes, I would like Contrarius to perform a pre-review
+                  plagiarism check.
                 </span>
               </label>
             </section>
@@ -852,8 +856,9 @@ export default function ProposalFormPage() {
               <h2 className="text-xl font-bold text-[#b0413e] mb-4 border-b pb-2">
                 Various
               </h2>
+              {/* REVISI NAMA CONTRARIUS */}
               <label className="block text-sm font-bold text-gray-700 mb-1">
-                How did you learn of this Portal?
+                How did you learn of Contrarius?
               </label>
               <select
                 name="how_learn_ap"
@@ -905,8 +910,9 @@ export default function ProposalFormPage() {
                   https://creativecommons.org/licenses/by-nc/4.0/
                 </span>
               </label>
+              {/* REVISI NAMA CONTRARIUS */}
               <p className="text-sm text-gray-600 ml-6">
-                Please note that all proceedings articles on the Publisher
+                Please note that all proceedings articles on the Contrarius
                 platform are “gold” open access and therefore freely available
                 in perpetuity from the moment of publication with a Creative
                 Commons Attribution License 4.0 attached. Under this model we
@@ -922,15 +928,15 @@ export default function ProposalFormPage() {
                   onChange={handleChange}
                   className="mt-1 flex-shrink-0"
                 />
+                {/* REVISI NAMA CONTRARIUS */}
                 <span className="text-sm text-gray-600">
                   Hereby I confirm that all information provided in this
                   proposal form is correct. I also confirm that the event
                   mentioned in this proposal form will be a real conference or
                   workshop where researchers will meet and discuss their work
                   and that all the papers of the proceedings will go through
-                  rigorous peer review process before being sent to the
-                  Publisher and that the volume editors will follow the Code of
-                  Conduct.
+                  rigorous peer review process before being sent to Contrarius
+                  and that the volume editors will follow the Code of Conduct.
                 </span>
               </label>
             </section>

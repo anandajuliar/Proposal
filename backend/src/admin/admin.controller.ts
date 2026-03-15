@@ -5,6 +5,9 @@ import {
   Body,
   BadRequestException,
   Param,
+  Query,
+  Put,
+  Delete,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
 
@@ -13,28 +16,36 @@ export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
   @Get('overview')
-  async getOverview() {
-    return this.adminService.getOverview();
+  async getOverview(
+    @Query('userId') userId: string,
+    @Query('role') role: string,
+  ) {
+    return this.adminService.getOverview(Number(userId), role);
   }
 
   @Post('proposals/draft')
-  async saveDraft(@Body() body: any) {
-    if (!body.event_name || !body.organizer_name) {
-      throw new BadRequestException(
-        'Event Name dan Organizer wajib diisi walau hanya draft!',
-      );
-    }
-    return this.adminService.saveProposal(body, false);
+  async saveDraft(@Body() data: any) {
+    return this.adminService.saveProposal(data, 'DRAFT');
   }
 
   @Post('proposals/submit')
-  async submitProposal(@Body() body: any) {
-    if (!body.event_name || !body.organizer_name || !body.form_details) {
-      throw new BadRequestException(
-        'Semua data wajib dilengkapi sebelum submit!',
+  async submitProposal(@Body() data: any) {
+    const res = await this.adminService.saveProposal(data, 'SUBMITTED');
+    if (data.proposal_id) {
+      await this.adminService.updateProposalStatus(
+        data.proposal_id,
+        'SUBMITTED',
       );
     }
-    return this.adminService.saveProposal(body, true);
+    return res;
+  }
+
+  @Put('proposals/:id/status')
+  async updateStatus(
+    @Param('id') id: string,
+    @Body() body: { status: string },
+  ) {
+    return this.adminService.updateProposalStatus(Number(id), body.status);
   }
 
   @Post('logout')
@@ -50,5 +61,40 @@ export class AdminController {
   @Get('proposals/:id')
   async getProposalById(@Param('id') id: string) {
     return this.adminService.getProposalById(id);
+  }
+
+  @Get('users')
+  async getUsers() {
+    return this.adminService.getAllUsers();
+  }
+
+  @Put('users/:id/role')
+  async updateUserRole(
+    @Param('id') id: string,
+    @Body() body: { role: string },
+  ) {
+    return this.adminService.updateUserRole(Number(id), body.role);
+  }
+
+  @Delete('users/:id')
+  async deleteUser(@Param('id') id: string) {
+    return this.adminService.deleteUser(Number(id));
+  }
+
+  @Get('templates')
+  async getTemplates() {
+    return this.adminService.getEmailTemplates();
+  }
+
+  @Put('templates/:id')
+  async updateTemplate(
+    @Param('id') id: string,
+    @Body() body: { subject: string; body: string },
+  ) {
+    return this.adminService.updateEmailTemplate(
+      Number(id),
+      body.subject,
+      body.body,
+    );
   }
 }

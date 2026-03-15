@@ -1,11 +1,10 @@
 "use client";
-
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function AuthPage() {
   const router = useRouter();
-  const [isLogin, setIsLogin] = useState(true); // Toggle antara Login & Register
+  const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     firstname: "",
@@ -25,7 +24,14 @@ export default function AuthPage() {
     const endpoint = isLogin ? "/auth/login" : "/auth/register";
 
     try {
-      const res = await fetch(`http://localhost:3001${endpoint}`, {
+      // =====================================================================
+      // VERSI PRODUCTION (Buka komen ini pas mau Build & Upload cPanel!)
+      // const res = await fetch(`https://api.contrariusactus.com/api${endpoint}`, {
+      // =====================================================================
+
+      // VERSI DEVELOPMENT (Pakai ini buat ngetes di laptop/localhost!)
+      const res = await fetch(`http://localhost:3001/api${endpoint}`, {
+        // =====================================================================
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -36,12 +42,11 @@ export default function AuthPage() {
       if (res.ok) {
         alert(data.message);
         if (isLogin) {
-          // Simpan token ke localStorage buat sesi
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user));
-          router.push("/admin"); // Redirect ke dashboard
+          router.push("/admin");
         } else {
-          setIsLogin(true); // Balik ke login setelah register sukses
+          setIsLogin(true);
         }
       } else {
         alert(`Gagal: ${data.message}`);
@@ -56,25 +61,28 @@ export default function AuthPage() {
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center font-sans p-6">
       <div className="bg-white shadow-2xl rounded-lg flex flex-col md:flex-row max-w-4xl w-full overflow-hidden">
-        {/* Sisi Kiri: Branding/Info */}
-        <div className="md:w-1/2 bg-[#b0413e] p-12 text-white flex flex-col justify-center">
-          <h1 className="text-4xl font-serif font-bold mb-4 tracking-tighter">
-            PUBLISHER PORTAL
+        {/* Sisi Kiri */}
+        <div className="md:w-1/2 bg-[#D24A46] p-12 text-white flex flex-col justify-center">
+          <h1 className="text-4xl font-bold mb-4 tracking-tighter flex items-center gap-2">
+            <span className="bg-white text-[#D24A46] px-2 py-1 rounded text-2xl">
+              CP
+            </span>
+            CONTRARIUS
           </h1>
-          <p className="text-lg opacity-80 font-light">
+          <p className="text-lg opacity-90 font-light">
             {isLogin
               ? "Welcome back! Access your proceedings organiser environment."
               : "Join us and start submitting your conference proceedings proposal."}
           </p>
           <div className="mt-8 border-t border-white/20 pt-8">
-            <p className="text-sm italic">"Part of Springer Nature Group"</p>
+            <p className="text-sm italic">"Part of Contrarius Actus Group"</p>
           </div>
         </div>
 
         {/* Sisi Kanan: Form */}
         <div className="md:w-1/2 p-12">
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-800">
+            <h2 className="text-2xl font-bold text-[#34435E]">
               {isLogin ? "Login" : "Create Account"}
             </h2>
             <p className="text-sm text-gray-500">
@@ -93,7 +101,7 @@ export default function AuthPage() {
                     type="text"
                     name="firstname"
                     onChange={handleChange}
-                    className="w-full border-b-2 border-gray-200 focus:border-[#b0413e] outline-none py-2 transition-colors"
+                    className="w-full border-b-2 border-gray-200 focus:border-[#D24A46] outline-none py-2 transition-colors"
                     required
                   />
                 </div>
@@ -105,13 +113,12 @@ export default function AuthPage() {
                     type="text"
                     name="lastname"
                     onChange={handleChange}
-                    className="w-full border-b-2 border-gray-200 focus:border-[#b0413e] outline-none py-2 transition-colors"
+                    className="w-full border-b-2 border-gray-200 focus:border-[#D24A46] outline-none py-2 transition-colors"
                     required
                   />
                 </div>
               </div>
             )}
-
             <div>
               <label className="block text-xs font-bold uppercase text-gray-400 mb-1">
                 Email Address
@@ -120,11 +127,10 @@ export default function AuthPage() {
                 type="email"
                 name="email"
                 onChange={handleChange}
-                className="w-full border-b-2 border-gray-200 focus:border-[#b0413e] outline-none py-2 transition-colors"
+                className="w-full border-b-2 border-gray-200 focus:border-[#D24A46] outline-none py-2 transition-colors"
                 required
               />
             </div>
-
             <div>
               <label className="block text-xs font-bold uppercase text-gray-400 mb-1">
                 Password
@@ -133,15 +139,14 @@ export default function AuthPage() {
                 type="password"
                 name="password"
                 onChange={handleChange}
-                className="w-full border-b-2 border-gray-200 focus:border-[#b0413e] outline-none py-2 transition-colors"
+                className="w-full border-b-2 border-gray-200 focus:border-[#D24A46] outline-none py-2 transition-colors"
                 required
               />
             </div>
-
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#b0413e] text-white font-bold py-3 rounded-md mt-6 hover:bg-[#8e3431] transition-all shadow-lg disabled:bg-gray-400"
+              className="w-full bg-[#34435E] text-white font-bold py-3 rounded-md mt-6 hover:bg-[#232e42] transition-all shadow-lg disabled:bg-gray-400"
             >
               {loading ? "Processing..." : isLogin ? "LOGIN" : "REGISTER"}
             </button>
@@ -152,7 +157,7 @@ export default function AuthPage() {
               {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
               <button
                 onClick={() => setIsLogin(!isLogin)}
-                className="text-[#b0413e] font-bold hover:underline"
+                className="text-[#D24A46] font-bold hover:underline"
               >
                 {isLogin ? "Sign Up Now" : "Back to Login"}
               </button>
