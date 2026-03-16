@@ -13,8 +13,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Atlantis Press | Proceedings",
-  description: "Proceedings organiser environment",
+  title: "Contrarius Institute",
+  description: "A Reputable Association Organization",
+  icons: {
+    icon: '/icon.png',},
 };
 
 export default function RootLayout({

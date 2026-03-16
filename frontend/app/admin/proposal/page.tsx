@@ -225,35 +225,41 @@ export default function ProposalFormPage() {
     <AuthGuard>
       <div className="min-h-screen bg-white font-serif text-gray-800 pb-20">
         <nav className="flex justify-between items-center p-5 bg-gray-50 border-b border-gray-200 text-sm font-sans sticky top-0 z-10">
-          <div className="font-bold text-[#b0413e] text-lg tracking-wider flex items-center gap-3">
-            <span className="bg-[#b0413e] text-white px-2 py-1 rounded text-sm">
-              CP
-            </span>
-            CONTRARIUS PORTAL
-          </div>
-          <div className="flex gap-10 items-center">
-            {userRole === "ADMIN" || userRole === "SUPER ADMIN" ? (
-              <span className="bg-[#b0413e] text-white px-3 py-1 rounded-full font-bold text-xs">
-                {userRole}
-              </span>
-            ) : null}
-            <Link href="/admin" className="hover:text-black">
-              Overview
-            </Link>
-            <Link
-              href="/admin/proposal"
-              className="font-bold border-b-2 border-[#b0413e]"
-            >
-              Proceedings proposal
-            </Link>
-            <button
-              onClick={handleLogout}
-              className="hover:text-black hover:underline"
-            >
-              Logout
-            </button>
-          </div>
-        </nav>
+  <div className="font-bold text-[#b0413e] text-lg tracking-wider flex items-center gap-3">
+    
+    {/* LOGO BARU KAMU MASUK SINI */}
+    <img 
+      src="/icon.png" 
+      alt="Contrarius Logo" 
+      className="h-9 w-9 object-contain" 
+    />
+    
+    CONTRARIUS INSTITUTE
+  </div>
+  
+  <div className="flex gap-10 items-center">
+    {userRole === "ADMIN" || userRole === "SUPER ADMIN" ? (
+      <span className="bg-[#b0413e] text-white px-3 py-1 rounded-full font-bold text-xs">
+        {userRole}
+      </span>
+    ) : null}
+    <Link href="/admin" className="hover:text-black">
+      Overview
+    </Link>
+    <Link
+      href="/admin/proposal"
+      className="font-bold border-b-2 border-[#b0413e]"
+    >
+      Proceedings proposal
+    </Link>
+    <button
+      onClick={handleLogout}
+      className="hover:text-black hover:underline"
+    >
+      Logout
+    </button>
+  </div>
+</nav>
 
         {/* DI SINI CONTAINER-NYA DIBIKIN LEGA LAGI SEPERTI KODINGAN AWALMU */}
         <main className="max-w-6xl mx-auto p-10 font-sans">
