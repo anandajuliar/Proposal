@@ -15,11 +15,11 @@ const InputGroup = ({
   onChange,
   hint = "",
 }: any) => (
-  <div className="mb-4">
-    <label className="block text-sm font-bold text-gray-700 mb-1">
+  <div className="mb-5">
+    <label className="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">
       {label} {required && <span className="text-red-500">*</span>}
     </label>
-    {hint && <p className="text-xs text-gray-400 mb-1 italic">{hint}</p>}
+    {hint && <p className="text-xs text-gray-400 mb-2 italic">{hint}</p>}
     <input
       type={type}
       name={name}
@@ -27,7 +27,7 @@ const InputGroup = ({
       onChange={onChange}
       placeholder={placeholder}
       required={required}
-      className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:border-[#b0413e] bg-white text-sm"
+      className="w-full bg-[#f0f4f8] text-gray-800 placeholder-gray-400 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-[#D24A46] transition-all text-sm"
     />
   </div>
 );
@@ -41,18 +41,18 @@ const TextAreaGroup = ({
   hint = "",
   required = false,
 }: any) => (
-  <div className="mb-4">
-    <label className="block text-sm font-bold text-gray-700 mb-1">
+  <div className="mb-5">
+    <label className="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">
       {label} {required && <span className="text-red-500">*</span>}
     </label>
-    {hint && <p className="text-xs text-gray-400 mb-1 italic">{hint}</p>}
+    {hint && <p className="text-xs text-gray-400 mb-2 italic">{hint}</p>}
     <textarea
       name={name}
       value={formData[name] || ""}
       onChange={onChange}
       rows={rows}
       required={required}
-      className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:border-[#b0413e] bg-white text-sm"
+      className="w-full bg-[#f0f4f8] text-gray-800 placeholder-gray-400 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-[#D24A46] transition-all text-sm"
     />
   </div>
 );
@@ -62,7 +62,7 @@ export default function ProposalFormPage() {
   const searchParams = useSearchParams();
   const proposalId = searchParams.get("id");
   const [userRole, setUserRole] = useState("USER");
-  const [user, setUser] = useState<any>(null); // State buat nangkep ID user
+  const [user, setUser] = useState<any>(null);
 
   const initialFormState = {
     credentials_name: "",
@@ -132,18 +132,14 @@ export default function ProposalFormPage() {
   const [formData, setFormData] = useState<any>(initialFormState);
 
   useEffect(() => {
-    // Cek Role & Data User
     const userStr = localStorage.getItem("user");
     if (userStr) {
       const parsedUser = JSON.parse(userStr);
       setUserRole(parsedUser.role);
-      setUser(parsedUser); // Simpan data user utuh biar bisa dapet ID-nya
+      setUser(parsedUser);
     }
 
-    // TARIK DATA DRAFT JIKA ADA ID
     if (proposalId) {
-      // 🟢 PRODUCTION: fetch(`https://api.contrariusactus.com/api/admin/proposals/${proposalId}`)
-      // 🔵 DEVELOPMENT:
       fetch(`http://localhost:3001/api/admin/proposals/${proposalId}`)
         .then((res) => res.json())
         .then((data) => {
@@ -174,7 +170,6 @@ export default function ProposalFormPage() {
       return;
     }
 
-    // MEMASUKKAN id_user KE DALAM PAYLOAD
     const payload = {
       proposal_id: proposalId,
       id_user: user ? user.id_user : null,
@@ -191,8 +186,6 @@ export default function ProposalFormPage() {
         ? "/admin/proposals/submit"
         : "/admin/proposals/draft";
 
-      // 🟢 PRODUCTION: const url = `https://api.contrariusactus.com/api${endpoint}`;
-      // 🔵 DEVELOPMENT:
       const url = `http://localhost:3001/api${endpoint}`;
 
       const res = await fetch(url, {
@@ -223,65 +216,64 @@ export default function ProposalFormPage() {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-white font-serif text-gray-800 pb-20">
-        <nav className="flex justify-between items-center p-5 bg-gray-50 border-b border-gray-200 text-sm font-sans sticky top-0 z-10">
-  <div className="font-bold text-[#b0413e] text-lg tracking-wider flex items-center gap-3">
-    
-    {/* LOGO BARU KAMU MASUK SINI */}
-    <img 
-      src="/icon.png" 
-      alt="Contrarius Logo" 
-      className="h-9 w-9 object-contain" 
-    />
-    
-    CONTRARIUS INSTITUTE
-  </div>
-  
-  <div className="flex gap-10 items-center">
-    {userRole === "ADMIN" || userRole === "SUPER ADMIN" ? (
-      <span className="bg-[#b0413e] text-white px-3 py-1 rounded-full font-bold text-xs">
-        {userRole}
-      </span>
-    ) : null}
-    <Link href="/admin" className="hover:text-black">
-      Overview
-    </Link>
-    <Link
-      href="/admin/proposal"
-      className="font-bold border-b-2 border-[#b0413e]"
-    >
-      Proceedings proposal
-    </Link>
-    <button
-      onClick={handleLogout}
-      className="hover:text-black hover:underline"
-    >
-      Logout
-    </button>
-  </div>
-</nav>
+      <div className="min-h-screen bg-[#f8fafc] font-sans text-gray-800 pb-20">
+        
+        {/* NAVBAR */}
+        <nav className="flex justify-between items-center px-8 py-4 bg-white shadow-sm border-b border-gray-100 text-sm sticky top-0 z-50">
+          <div className="font-bold text-[#3B4D6A] text-xl tracking-wider flex items-center gap-3">
+            <img 
+              src="/icon.png" 
+              alt="Contrarius Logo" 
+              className="h-9 w-9 object-contain" 
+            />
+            CONTRARIUS INSTITUTE
+          </div>
+          <div className="flex gap-8 items-center font-medium">
+            {/* Sekarang badge ini bakal muncul buat SEMUA role (termasuk USER) */}
+            {userRole && (
+              <span className="bg-[#D24A46] text-white px-3 py-1 rounded-full font-bold text-xs shadow-sm uppercase tracking-wider">
+                {userRole}
+              </span>
+            )}
+            <Link href="/admin" className="text-[#64748B] hover:text-[#3B4D6A] transition-colors duration-200">
+              Overview
+            </Link>
+            <Link
+              href="/admin/proposal"
+              className="text-[#3B4D6A] font-bold border-b-2 border-[#D24A46] pb-1"
+            >
+              Proceedings proposal
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="bg-transparent border-2 border-[#D24A46] text-[#D24A46] px-5 py-1.5 rounded-md hover:bg-[#D24A46] hover:text-white transition-all duration-300 font-bold shadow-sm active:scale-95"
+            >
+              LOGOUT
+            </button>
+          </div>
+        </nav>
 
-        {/* DI SINI CONTAINER-NYA DIBIKIN LEGA LAGI SEPERTI KODINGAN AWALMU */}
-        <main className="max-w-6xl mx-auto p-10 font-sans">
+        <main className="max-w-4xl mx-auto p-10 mt-4">
           <Link
             href="/admin"
-            className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300 mb-6 inline-block font-bold transition-colors"
+            className="text-[#64748B] hover:text-[#3B4D6A] font-bold text-sm flex items-center gap-2 mb-8 transition-colors w-fit"
           >
             ← Back to overview
           </Link>
 
-          <h1 className="text-3xl text-[#b0413e] mb-2 font-serif">
-            Proceedings proposal
-          </h1>
-          <p className="text-sm text-gray-500 mb-8 border-b pb-6">
-            * Please note that all form fields are mandatory unless stated
-            otherwise.
-          </p>
+          <div className="mb-10">
+            <h1 className="text-4xl font-extrabold text-[#3B4D6A] tracking-tight mb-2">
+              Proceedings proposal
+            </h1>
+            <p className="text-sm text-gray-500">
+              * Please note that all form fields are mandatory unless stated otherwise.
+            </p>
+          </div>
 
-          <div className="space-y-12">
+          <div className="space-y-8">
             {/* 1. YOUR CREDENTIALS */}
-            <section>
-              <h2 className="text-xl font-bold text-[#b0413e] mb-4 border-b pb-2">
+            <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+              <h2 className="text-xl font-bold text-[#3B4D6A] mb-6 border-b border-gray-100 pb-4">
                 Your Credentials
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
@@ -310,7 +302,7 @@ export default function ProposalFormPage() {
                 <InputGroup
                   label="Phone number corresponding contact"
                   name="credentials_phone"
-                  hint="Please don't use spaces or separators such as '-', '.' or '/'."
+                  hint="Please don't use spaces or separators"
                   formData={formData}
                   onChange={handleChange}
                 />
@@ -333,10 +325,9 @@ export default function ProposalFormPage() {
             </section>
 
             {/* 2. SIGNATORY CREDENTIALS */}
-            <section>
-              <h2 className="text-xl font-bold text-[#b0413e] mb-4 border-b pb-2">
-                Credentials of the person authorised to sign the publishing
-                agreement
+            <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+              <h2 className="text-xl font-bold text-[#3B4D6A] mb-6 border-b border-gray-100 pb-4">
+                Credentials of the person authorised to sign
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
                 <InputGroup
@@ -377,8 +368,8 @@ export default function ProposalFormPage() {
             </section>
 
             {/* 3. EVENT DETAILS */}
-            <section>
-              <h2 className="text-xl font-bold text-[#b0413e] mb-4 border-b pb-2">
+            <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+              <h2 className="text-xl font-bold text-[#3B4D6A] mb-6 border-b border-gray-100 pb-4">
                 Event details
               </h2>
               <InputGroup
@@ -390,14 +381,14 @@ export default function ProposalFormPage() {
               />
               <div className="grid grid-cols-2 gap-4">
                 <InputGroup
-                  label="Acronym of the event (in English)"
+                  label="Acronym of the event"
                   name="acronym"
                   formData={formData}
                   onChange={handleChange}
                   required
                 />
                 <InputGroup
-                  label="Number of past editions of the proceedings"
+                  label="Number of past editions"
                   name="past_editions"
                   type="number"
                   formData={formData}
@@ -425,15 +416,15 @@ export default function ProposalFormPage() {
                 onChange={handleChange}
               />
 
-              <div className="mt-4 mb-4">
-                <label className="block text-sm font-bold text-gray-700 mb-1">
+              <div className="mb-5">
+                <label className="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">
                   Conference type
                 </label>
                 <select
                   name="conference_type"
                   value={formData.conference_type}
                   onChange={handleChange}
-                  className="w-full border p-2 rounded text-sm bg-white"
+                  className="w-full bg-[#f0f4f8] text-gray-800 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-[#D24A46] transition-all text-sm cursor-pointer"
                 >
                   <option value="">Choose a value...</option>
                   <option value="In person">In person</option>
@@ -454,7 +445,7 @@ export default function ProposalFormPage() {
                 <InputGroup
                   label="Country"
                   name="country"
-                  hint="In case the conference is held virtually, please fill in the location of the main organizer."
+                  hint="For virtual conference, location of main organizer."
                   formData={formData}
                   onChange={handleChange}
                 />
@@ -462,7 +453,6 @@ export default function ProposalFormPage() {
                   label="Start date"
                   name="start_date"
                   type="date"
-                  hint="Please use the YYYY-MM-DD format"
                   formData={formData}
                   onChange={handleChange}
                 />
@@ -470,18 +460,16 @@ export default function ProposalFormPage() {
                   label="End date"
                   name="end_date"
                   type="date"
-                  hint="Please use the YYYY-MM-DD format"
                   formData={formData}
                   onChange={handleChange}
                 />
               </div>
 
-              {/* REVISI NAMA CONTRARIUS */}
               <InputGroup
                 label="Expected delivery date of articles to Contrarius"
                 name="delivery_date"
                 type="date"
-                hint="You can communicate changes to the expected delivery date at any later stage via Email."
+                hint="Changes can be communicated later via Email."
                 formData={formData}
                 onChange={handleChange}
                 required
@@ -494,20 +482,20 @@ export default function ProposalFormPage() {
                 onChange={handleChange}
               />
               <TextAreaGroup
-                label="Websites of the past editions (last 3-5 years, if applicable)"
+                label="Websites of the past editions (last 3-5 years)"
                 name="past_websites"
                 formData={formData}
                 onChange={handleChange}
               />
               <TextAreaGroup
-                label="Web links to the proceedings of the past editions (last 3-5 years)"
-                hint="If proceedings are not available online, please specify where they were published"
+                label="Web links to the proceedings of the past editions"
+                hint="If not available online, specify where published"
                 name="past_proceedings_links"
                 formData={formData}
                 onChange={handleChange}
               />
               <TextAreaGroup
-                label="Indexes: in which indexes have the proceedings of the past editions been indexed?"
+                label="Indexes: past editions indexed in?"
                 hint="Please provide links"
                 name="indexes"
                 formData={formData}
@@ -516,57 +504,53 @@ export default function ProposalFormPage() {
             </section>
 
             {/* 4. AUDIENCE */}
-            <section>
-              <h2 className="text-xl font-bold text-[#b0413e] mb-4 border-b pb-2">
+            <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+              <h2 className="text-xl font-bold text-[#3B4D6A] mb-6 border-b border-gray-100 pb-4">
                 Audience
               </h2>
-              <p className="text-sm font-bold mb-2">
-                For whom is the conference intended? Please indicate content
-                level:
+              <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mb-4">
+                For whom is the conference intended?
               </p>
-              <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-4">
                 {[
                   { label: "Undergraduate", name: "audience_undergrad" },
                   { label: "Graduate", name: "audience_grad" },
                   {
-                    label: "Professional/practitioner",
+                    label: "Professional / Practitioner",
                     name: "audience_professional",
                   },
                   { label: "Research", name: "audience_research" },
-                  { label: "Popular/general", name: "audience_popular" },
+                  { label: "Popular / General", name: "audience_popular" },
                 ].map((item) => (
                   <label
                     key={item.name}
-                    className="flex items-center gap-2 text-sm"
+                    className="flex items-center gap-3 text-sm text-gray-700 bg-[#f0f4f8] p-3 rounded-md cursor-pointer hover:bg-gray-100 transition-colors"
                   >
                     <input
                       type="checkbox"
                       name={item.name}
                       checked={formData[item.name] || false}
                       onChange={handleChange}
+                      className="w-4 h-4 text-[#D24A46] focus:ring-[#D24A46] rounded border-gray-300"
                     />
-                    {item.label}
+                    <span className="font-medium">{item.label}</span>
                   </label>
                 ))}
               </div>
             </section>
 
             {/* 5. EDITORS AND REVIEW */}
-            <section>
-              <h2 className="text-xl font-bold text-[#b0413e] mb-4 border-b pb-2">
+            <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+              <h2 className="text-xl font-bold text-[#3B4D6A] mb-6 border-b border-gray-100 pb-4">
                 Editors and review
               </h2>
-              {/* REVISI NAMA CONTRARIUS */}
-              <p className="text-sm text-gray-500 mb-6">
-                Names of the proceedings editor(s), i.e., those ultimately
-                responsible for the contents of the proceedings, whose names are
+              <p className="text-sm text-gray-500 mb-8 bg-[#f0f4f8] p-4 rounded-md border-l-4 border-[#3B4D6A]">
+                Names of the proceedings editor(s) whose names are
                 to appear on the Contrarius Portal and cover of the proceedings
                 volume as Editors:
               </p>
 
-              <h3 className="font-bold text-sm mb-2 text-[#b0413e]">
-                Editor 1
-              </h3>
+              <h3 className="font-bold text-lg mb-4 text-[#3B4D6A]">Editor 1</h3>
               <div className="grid grid-cols-2 gap-4">
                 <InputGroup
                   label="First Name"
@@ -582,28 +566,28 @@ export default function ProposalFormPage() {
                 />
               </div>
               <InputGroup
-                label="Email address (university or professional email required)"
+                label="Email address"
                 hint="University or professional email required"
                 name="editor1_email"
                 formData={formData}
                 onChange={handleChange}
               />
               <TextAreaGroup
-                label="Full Affiliation: (Institution, Department, City, Postal Code, Country)"
+                label="Full Affiliation: (Institution, Dept, City, Postal Code, Country)"
                 name="editor1_affiliation"
                 formData={formData}
                 onChange={handleChange}
               />
 
-              <div className="mb-6">
-                <label className="block text-sm font-bold text-gray-700 mb-1">
-                  Is Corresponding? (Yes or No)
+              <div className="mb-8">
+                <label className="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">
+                  Is Corresponding?
                 </label>
                 <select
                   name="editor1_corresponding"
                   value={formData.editor1_corresponding}
                   onChange={handleChange}
-                  className="w-full border p-2 rounded text-sm bg-white"
+                  className="w-full bg-[#f0f4f8] text-gray-800 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-[#D24A46] transition-all text-sm cursor-pointer"
                 >
                   <option value="">Choose...</option>
                   <option value="Yes">Yes</option>
@@ -611,9 +595,7 @@ export default function ProposalFormPage() {
                 </select>
               </div>
 
-              <h3 className="font-bold text-sm mb-2 text-[#b0413e] border-t pt-4">
-                Editor 2
-              </h3>
+              <h3 className="font-bold text-lg mb-4 text-[#3B4D6A] border-t border-gray-100 pt-8">Editor 2</h3>
               <div className="grid grid-cols-2 gap-4">
                 <InputGroup
                   label="First Name"
@@ -629,28 +611,28 @@ export default function ProposalFormPage() {
                 />
               </div>
               <InputGroup
-                label="Email address (university or professional email required)"
+                label="Email address"
                 hint="University or professional email required"
                 name="editor2_email"
                 formData={formData}
                 onChange={handleChange}
               />
               <TextAreaGroup
-                label="Full Affiliation: (Institution, Department, City, Postal Code, Country)"
+                label="Full Affiliation: (Institution, Dept, City, Postal Code, Country)"
                 name="editor2_affiliation"
                 formData={formData}
                 onChange={handleChange}
               />
 
-              <div className="mb-6">
-                <label className="block text-sm font-bold text-gray-700 mb-1">
-                  Is Corresponding? (Yes or No)
+              <div className="mb-8">
+                <label className="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">
+                  Is Corresponding?
                 </label>
                 <select
                   name="editor2_corresponding"
                   value={formData.editor2_corresponding}
                   onChange={handleChange}
-                  className="w-full border p-2 rounded text-sm bg-white"
+                  className="w-full bg-[#f0f4f8] text-gray-800 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-[#D24A46] transition-all text-sm cursor-pointer"
                 >
                   <option value="">Choose...</option>
                   <option value="Yes">Yes</option>
@@ -658,37 +640,33 @@ export default function ProposalFormPage() {
                 </select>
               </div>
 
-              <h3 className="font-bold text-sm mb-2 text-[#b0413e] border-t pt-4">
-                Other editors (if any)
-              </h3>
+              <h3 className="font-bold text-lg mb-4 text-[#3B4D6A] border-t border-gray-100 pt-8">Other editors</h3>
               <TextAreaGroup
-                label=""
-                hint="Information of other editors if there are more than two editors. Please provide the required information as the above."
+                label="Details of other editors (if > 2)"
+                hint="Provide required info as above."
                 name="other_editors"
                 formData={formData}
                 onChange={handleChange}
               />
 
-              <h3 className="font-bold text-sm mb-2 text-[#b0413e] border-t pt-4">
-                Reviewers
-              </h3>
+              <h3 className="font-bold text-lg mb-4 text-[#3B4D6A] border-t border-gray-100 pt-8">Reviewers</h3>
               <TextAreaGroup
-                label=""
-                hint="Full Name, title, email address (university or professional email required), affiliation and full address of at least three senior person(s) responsible for the review process of the conference (who can be contacted by us)."
+                label="Reviewer Details"
+                hint="Full Name, title, email, affiliation of at least three senior person(s) responsible for review."
                 name="reviewers_list"
                 formData={formData}
                 onChange={handleChange}
               />
 
               <div className="mt-4">
-                <label className="block text-sm font-bold text-gray-700 mb-1">
+                <label className="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">
                   Type of review:
                 </label>
                 <select
                   name="review_type"
                   value={formData.review_type}
                   onChange={handleChange}
-                  className="w-full border p-2 rounded text-sm bg-white"
+                  className="w-full bg-[#f0f4f8] text-gray-800 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-[#D24A46] transition-all text-sm cursor-pointer"
                 >
                   <option value="">Choose a value...</option>
                   <option value="Main editor peer review">
@@ -707,65 +685,69 @@ export default function ProposalFormPage() {
             </section>
 
             {/* 6. PAPER SELECTION */}
-            <section>
-              <h2 className="text-xl font-bold text-[#b0413e] mb-4 border-b pb-2">
+            <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+              <h2 className="text-xl font-bold text-[#3B4D6A] mb-6 border-b border-gray-100 pb-4">
                 Paper selection
               </h2>
               <TextAreaGroup
-                label="How do you collect and manage new submissions? E.g., by email, or online editorial system etc."
-                hint="If you are using online editorial system such as Easy Chair, Meteor, Scholar One etc., please indicate which one you are using to go through full-paper peer review process."
+                label="How do you collect and manage submissions?"
+                hint="E.g., Easy Chair, Meteor, Scholar One, Email."
                 name="submission_management"
                 formData={formData}
                 onChange={handleChange}
               />
-              <InputGroup
-                label="By how many reviewers will each paper be reviewed?"
-                name="reviewers_per_paper"
-                formData={formData}
-                onChange={handleChange}
-              />
-              <InputGroup
-                label="Expected number of paper submissions"
-                name="expected_submissions"
-                type="number"
-                formData={formData}
-                onChange={handleChange}
-              />
-              <InputGroup
-                label="Estimated minimum number of accepted papers"
-                name="expected_accepted"
-                type="number"
-                formData={formData}
-                onChange={handleChange}
-              />
-              <InputGroup
-                label="Estimated page number for the proceedings (where a page contains some 400 words)"
-                name="estimated_pages"
-                type="number"
-                formData={formData}
-                onChange={handleChange}
-              />
-              <InputGroup
-                label="Estimated number of participants of the conference"
-                name="estimated_participants"
-                type="number"
-                formData={formData}
-                onChange={handleChange}
-              />
-              <InputGroup
-                label="Expected geographic distribution of participants of the conference"
-                name="geographic_dist"
-                formData={formData}
-                onChange={handleChange}
-              />
+              <div className="grid grid-cols-2 gap-4">
+                <InputGroup
+                  label="Reviewers per paper"
+                  name="reviewers_per_paper"
+                  formData={formData}
+                  onChange={handleChange}
+                />
+                <InputGroup
+                  label="Expected submissions"
+                  name="expected_submissions"
+                  type="number"
+                  formData={formData}
+                  onChange={handleChange}
+                />
+                <InputGroup
+                  label="Min. accepted papers"
+                  name="expected_accepted"
+                  type="number"
+                  formData={formData}
+                  onChange={handleChange}
+                />
+                <InputGroup
+                  label="Estimated total pages"
+                  name="estimated_pages"
+                  type="number"
+                  formData={formData}
+                  onChange={handleChange}
+                />
+                <InputGroup
+                  label="Estimated participants"
+                  name="estimated_participants"
+                  type="number"
+                  formData={formData}
+                  onChange={handleChange}
+                />
+                <InputGroup
+                  label="Expected geographic distribution"
+                  name="geographic_dist"
+                  formData={formData}
+                  onChange={handleChange}
+                />
+              </div>
               <TextAreaGroup
-                label="Number of submissions, acceptance rate, estimated number of participants for several past editions (if applicable)"
+                label="Metrics for past editions"
+                hint="Submissions, acceptance rate, participants."
                 name="past_metrics"
                 formData={formData}
                 onChange={handleChange}
               />
               <TextAreaGroup
-                label="Please indicate any supplementary materials or data you plan to include: (e.g., software, online files, delicate websites, solution manual etc.)"
+                label="Supplementary materials"
+                hint="E.g., software, datasets, solution manual."
                 name="supplementary"
                 formData={formData}
                 onChange={handleChange}
@@ -773,25 +755,25 @@ export default function ProposalFormPage() {
             </section>
 
             {/* 7. SCOPE AND PC */}
-            <section>
-              <h2 className="text-xl font-bold text-[#b0413e] mb-4 border-b pb-2">
+            <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+              <h2 className="text-xl font-bold text-[#3B4D6A] mb-6 border-b border-gray-100 pb-4">
                 Scope and PC
               </h2>
               <TextAreaGroup
-                label="Topics/link to CFP"
+                label="Topics / link to CFP"
                 name="topics_cfp"
                 formData={formData}
                 onChange={handleChange}
               />
               <TextAreaGroup
-                label="Names and affiliations of people in the organizing and technical/scientific committee"
-                hint="General chairs, program chairs, technical/scientific committee members, etc"
+                label="Organizing and technical committee"
+                hint="Names and affiliations of members"
                 name="committee_names"
                 formData={formData}
                 onChange={handleChange}
               />
               <TextAreaGroup
-                label="Brief introduction keynote speakers (mandatory) and keynote speeches (if applicable)"
+                label="Keynote speakers and speeches"
                 name="keynote_info"
                 formData={formData}
                 onChange={handleChange}
@@ -800,168 +782,126 @@ export default function ProposalFormPage() {
             </section>
 
             {/* 8. PRINT VERSION & PLAGIARISM */}
-            <section>
-              <h2 className="text-xl font-bold text-[#b0413e] mb-4 border-b pb-2">
-                Print version (optional)
+            <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+              <h2 className="text-xl font-bold text-[#3B4D6A] mb-4">
+                Additional Services
               </h2>
-              <p className="text-sm font-bold mb-2">
-                Do you wish to receive print-ready files?
-              </p>
-              {/* REVISI NAMA CONTRARIUS */}
-              <p className="text-sm text-gray-500 mb-2">
-                Print-ready files: Contrarius is able to provide a e-printable
-                file of the whole proceedings books with Rights & Permission all
-                cleared allowing conference organizers to print it with a local
-                printer. (Cost: 1,000 euro).
-              </p>
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  name="print_ready"
-                  checked={formData.print_ready || false}
-                  onChange={handleChange}
-                  className="mt-1"
-                />
-                <span className="text-sm">
-                  Yes, I want to receive print-ready files (including a table of
-                  contents and print ISBN) which you can then have printed by a
-                  local printing service.
-                </span>
-              </label>
+              
+              <div className="bg-[#f0f4f8] p-5 rounded-lg mb-6">
+                <h3 className="font-bold text-sm mb-2 text-[#3B4D6A] uppercase tracking-wider">Print version (optional)</h3>
+                <p className="text-sm text-gray-500 mb-4">
+                  Contrarius can provide a e-printable file of the whole proceedings books allowing organizers to print locally. (Cost: 1,000 euro).
+                </p>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="print_ready"
+                    checked={formData.print_ready || false}
+                    onChange={handleChange}
+                    className="mt-1 w-4 h-4 text-[#D24A46] focus:ring-[#D24A46] rounded border-gray-300"
+                  />
+                  <span className="text-sm font-medium text-gray-700">
+                    Yes, I want to receive print-ready files (including TOC and ISBN).
+                  </span>
+                </label>
+              </div>
 
-              <h2 className="text-xl font-bold text-[#b0413e] mb-4 border-b pb-2 mt-8">
-                Pre-review plagiarism check (optional)
-              </h2>
-              {/* REVISI NAMA CONTRARIUS */}
-              <p className="text-sm text-gray-500 mb-2">
-                Contrarius also provides a service allowing proceedings
-                organizers to check the submitted papers on plagiarism before
-                they are reviewed by your experts. This way, organizers can
-                avoid reviewing papers that would have been rejected for
-                plagiarism anyway and also to pay 50% of the publication fee for
-                these rejected papers. (Costs: 100 euro set up fee + 5
-                euro/paper).
-              </p>
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  name="plagiarism_check"
-                  checked={formData.plagiarism_check || false}
-                  onChange={handleChange}
-                  className="mt-1"
-                />
-                <span className="text-sm">
-                  Yes, I would like Contrarius to perform a pre-review
-                  plagiarism check.
-                </span>
-              </label>
+              <div className="bg-[#f0f4f8] p-5 rounded-lg">
+                <h3 className="font-bold text-sm mb-2 text-[#3B4D6A] uppercase tracking-wider">Pre-review plagiarism check (optional)</h3>
+                <p className="text-sm text-gray-500 mb-4">
+                  Check submitted papers on plagiarism before expert review. Avoid reviewing rejected papers. (Costs: 100 euro set up fee + 5 euro/paper).
+                </p>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="plagiarism_check"
+                    checked={formData.plagiarism_check || false}
+                    onChange={handleChange}
+                    className="mt-1 w-4 h-4 text-[#D24A46] focus:ring-[#D24A46] rounded border-gray-300"
+                  />
+                  <span className="text-sm font-medium text-gray-700">
+                    Yes, I would like Contrarius to perform a pre-review plagiarism check.
+                  </span>
+                </label>
+              </div>
             </section>
 
             {/* 9. VARIOUS */}
-            <section>
-              <h2 className="text-xl font-bold text-[#b0413e] mb-4 border-b pb-2">
+            <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+              <h2 className="text-xl font-bold text-[#3B4D6A] mb-6 border-b border-gray-100 pb-4">
                 Various
               </h2>
-              {/* REVISI NAMA CONTRARIUS */}
-              <label className="block text-sm font-bold text-gray-700 mb-1">
+              <label className="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">
                 How did you learn of Contrarius?
               </label>
               <select
                 name="how_learn_ap"
                 value={formData.how_learn_ap}
                 onChange={handleChange}
-                className="w-full border p-2 rounded text-sm bg-white"
+                className="w-full bg-[#f0f4f8] text-gray-800 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-[#D24A46] transition-all text-sm cursor-pointer"
               >
                 <option value="">Choose a value</option>
-                <option value="Past collaboration">
-                  Past collaboration: please mention the name of the
-                  publication(s)
-                </option>
+                <option value="Past collaboration">Past collaboration</option>
                 <option value="Advertisement">Advertisement</option>
-                <option value="From publisher editor">
-                  From publisher editor: please give the name
-                </option>
-                <option value="Internet search">
-                  Internet search: please provide keywords you used
-                </option>
-                <option value="From colleagues / peers">
-                  From colleagues / peers: please give his/her name
-                </option>
-                <option value="From publisher website">
-                  From publisher website
-                </option>
+                <option value="From publisher editor">From publisher editor</option>
+                <option value="Internet search">Internet search</option>
+                <option value="From colleagues / peers">From colleagues / peers</option>
+                <option value="From publisher website">From publisher website</option>
                 <option value="Other">Other:</option>
               </select>
             </section>
 
             {/* 10. CONFIRMATION */}
-            <section className="bg-gray-50 p-6 border rounded space-y-4">
-              <h2 className="text-xl font-bold text-[#b0413e] border-b pb-2">
-                Confirmation
+            <section className="bg-[#3B4D6A] p-8 rounded-2xl shadow-xl text-white">
+              <h2 className="text-xl font-bold mb-6 border-b border-white/20 pb-4 flex items-center gap-2">
+               Confirmation
               </h2>
-              <label className="flex gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  name="agreement_accepted"
-                  checked={formData.agreement_accepted || false}
-                  onChange={handleChange}
-                  className="mt-1 flex-shrink-0"
-                />
-                <span className="text-sm text-gray-600">
-                  Yes, I accept that the content of these proceedings will be
-                  distributed under the terms of the Creative Commons
-                  Attribution License 4.0, which permits non-commercial use,
-                  distribution and reproduction in any medium, provided the
-                  original work is properly cited. See for details:
-                  https://creativecommons.org/licenses/by-nc/4.0/
-                </span>
-              </label>
-              {/* REVISI NAMA CONTRARIUS */}
-              <p className="text-sm text-gray-600 ml-6">
-                Please note that all proceedings articles on the Contrarius
-                platform are “gold” open access and therefore freely available
-                in perpetuity from the moment of publication with a Creative
-                Commons Attribution License 4.0 attached. Under this model we
-                will charge the organizer for the cost of publishing, which is
-                usually covered by the organizers’ institution/society or
-                research funders, conference registration fee, etc.
-              </p>
-              <label className="flex gap-3 cursor-pointer mt-4">
-                <input
-                  type="checkbox"
-                  name="confirmation_correct"
-                  checked={formData.confirmation_correct || false}
-                  onChange={handleChange}
-                  className="mt-1 flex-shrink-0"
-                />
-                {/* REVISI NAMA CONTRARIUS */}
-                <span className="text-sm text-gray-600">
-                  Hereby I confirm that all information provided in this
-                  proposal form is correct. I also confirm that the event
-                  mentioned in this proposal form will be a real conference or
-                  workshop where researchers will meet and discuss their work
-                  and that all the papers of the proceedings will go through
-                  rigorous peer review process before being sent to Contrarius
-                  and that the volume editors will follow the Code of Conduct.
-                </span>
-              </label>
+              
+              <div className="space-y-6">
+                <label className="flex gap-4 cursor-pointer items-start bg-white/5 p-4 rounded-lg hover:bg-white/10 transition-colors">
+                  <input
+                    type="checkbox"
+                    name="agreement_accepted"
+                    checked={formData.agreement_accepted || false}
+                    onChange={handleChange}
+                    className="mt-1 flex-shrink-0 w-5 h-5 text-[#D24A46] focus:ring-[#D24A46] rounded border-white/30 bg-transparent"
+                  />
+                  <span className="text-sm text-blue-100 leading-relaxed">
+                    Yes, I accept that the content of these proceedings will be distributed under the Creative Commons Attribution License 4.0. Note: all proceedings articles are “gold” open access. We will charge the organizer for the cost of publishing.
+                  </span>
+                </label>
+
+                <label className="flex gap-4 cursor-pointer items-start bg-white/5 p-4 rounded-lg hover:bg-white/10 transition-colors">
+                  <input
+                    type="checkbox"
+                    name="confirmation_correct"
+                    checked={formData.confirmation_correct || false}
+                    onChange={handleChange}
+                    className="mt-1 flex-shrink-0 w-5 h-5 text-[#D24A46] focus:ring-[#D24A46] rounded border-white/30 bg-transparent"
+                  />
+                  <span className="text-sm text-blue-100 leading-relaxed">
+                    Hereby I confirm that all information provided is correct, the event will be a real conference/workshop, and all papers will go through rigorous peer review process before being sent to Contrarius.
+                  </span>
+                </label>
+              </div>
             </section>
 
             {/* BUTTONS */}
-            <div className="flex justify-end gap-4 border-t pt-8">
+            <div className="flex flex-col sm:flex-row justify-end gap-4 mt-12 pt-8 border-t border-gray-200">
               <button
                 onClick={() => handleSave(false)}
-                className="px-8 py-2 border border-gray-400 text-gray-700 rounded hover:bg-gray-100 font-bold shadow-sm transition-colors"
+                className="px-8 py-3 bg-white border-2 border-[#3B4D6A] text-[#3B4D6A] rounded-md hover:bg-[#f0f4f8] font-bold shadow-sm transition-all active:scale-95 text-sm uppercase tracking-wider"
               >
-                Save as Draft
+                SAVE AS DRAFT
               </button>
               <button
                 onClick={() => handleSave(true)}
-                className="px-8 py-2 bg-[#b0413e] text-white rounded hover:bg-[#8e3431] font-bold shadow-md transition-colors"
+                className="px-8 py-3 bg-[#3B4D6A] text-white rounded-md hover:bg-[#2a374b] font-bold shadow-lg transition-all active:scale-95 text-sm uppercase tracking-wider"
               >
-                Submit proposal
+                SUBMIT PROPOSAL
               </button>
             </div>
+
           </div>
         </main>
       </div>
