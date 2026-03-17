@@ -7,12 +7,11 @@ export class AdminService {
   private transporter;
 
   constructor() {
-    // KONFIGURASI EMAIL REAL-TIME
     this.transporter = nodemailer.createTransport({
-      service: 'gmail',
+      service: 'gmail', 
       auth: {
-        user: 'emailkamu@gmail.com', // GANTI: Email pengirim
-        pass: 'app_password_gmail_kamu', // GANTI: App Password dari Google
+        user: 'forms@contrariusactus.com', 
+        pass: 'hvfh bbxo mvft szjb',         
       },
     });
   }
@@ -164,7 +163,7 @@ export class AdminService {
         const targetEmail = userRes[0].email;
         try {
           await this.transporter.sendMail({
-            from: '"Contrarius Institute" <noreply@contrariusactus.com>',
+            from: '"Contrarius Institute" <forms@contrariusactus.com>',
             to: targetEmail,
             subject: templateRes[0].subject,
             text: templateRes[0].body,
