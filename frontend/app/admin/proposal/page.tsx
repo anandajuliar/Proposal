@@ -64,7 +64,6 @@ export default function ProposalFormPage() {
   const [userRole, setUserRole] = useState("USER");
   const [user, setUser] = useState<any>(null);
 
-  // STATE CUSTOM MODAL
   const [dialog, setDialog] = useState({
     isOpen: false,
     title: "",
@@ -162,7 +161,6 @@ export default function ProposalFormPage() {
       setUserRole(parsedUser.role);
       setUser(parsedUser);
 
-      // 🔥 LOGIKA ANTI-MALING YANG BENAR
       if (parsedUser.role === "ADMIN") {
         showAlert(
           "Access Denied",
@@ -189,7 +187,6 @@ export default function ProposalFormPage() {
     }
 
     if (proposalId) {
-      // 🔵 DEVELOPMENT (Ubah ke API Server kalau mau Deploy)
       fetch(`http://localhost:3001/api/admin/proposals/${proposalId}`)
         .then((res) => res.json())
         .then((data) => {
@@ -266,7 +263,6 @@ export default function ProposalFormPage() {
     });
   };
 
-  // 🔥 CEGAH KEDIP UI: Jangan render form sama sekali kalau dia kena blokir
   if (userRole === "ADMIN" || (userRole === "SUPER ADMIN" && !proposalId)) {
     return (
       <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center">
@@ -297,7 +293,6 @@ export default function ProposalFormPage() {
   return (
     <AuthGuard>
       <div className="min-h-screen bg-[#f8fafc] font-sans text-gray-800 pb-20">
-        {/* CUSTOM MODAL */}
         {dialog.isOpen && (
           <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 transition-all">
             <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full border-t-4 border-[#D24A46] transform transition-all">
@@ -379,7 +374,6 @@ export default function ProposalFormPage() {
           </div>
 
           <div className="space-y-8">
-            {/* CREDENTIALS */}
             <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-xl font-bold text-[#3B4D6A] mb-6 border-b border-gray-100 pb-4">
                 Your Credentials
@@ -474,7 +468,6 @@ export default function ProposalFormPage() {
               </div>
             </section>
 
-            {/* EVENT DETAILS */}
             <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-xl font-bold text-[#3B4D6A] mb-6 border-b border-gray-100 pb-4">
                 Event details
@@ -606,7 +599,6 @@ export default function ProposalFormPage() {
               />
             </section>
 
-            {/* AUDIENCE */}
             <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-xl font-bold text-[#3B4D6A] mb-6 border-b border-gray-100 pb-4">
                 Audience
@@ -642,7 +634,6 @@ export default function ProposalFormPage() {
               </div>
             </section>
 
-            {/* EDITORS AND REVIEW */}
             <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-xl font-bold text-[#3B4D6A] mb-6 border-b border-gray-100 pb-4">
                 Editors and review
@@ -791,7 +782,6 @@ export default function ProposalFormPage() {
               </div>
             </section>
 
-            {/* PAPER SELECTION */}
             <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-xl font-bold text-[#3B4D6A] mb-6 border-b border-gray-100 pb-4">
                 Paper selection
@@ -861,7 +851,6 @@ export default function ProposalFormPage() {
               />
             </section>
 
-            {/* SCOPE AND PC */}
             <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-xl font-bold text-[#3B4D6A] mb-6 border-b border-gray-100 pb-4">
                 Scope and PC
@@ -888,7 +877,6 @@ export default function ProposalFormPage() {
               />
             </section>
 
-            {/* PRINT VERSION & PLAGIARISM */}
             <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-xl font-bold text-[#3B4D6A] mb-4">
                 Additional Services
@@ -941,7 +929,6 @@ export default function ProposalFormPage() {
               </div>
             </section>
 
-            {/* VARIOUS */}
             <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-xl font-bold text-[#3B4D6A] mb-6 border-b border-gray-100 pb-4">
                 Various
@@ -972,7 +959,6 @@ export default function ProposalFormPage() {
               </select>
             </section>
 
-            {/* CONFIRMATION */}
             <section className="bg-[#3B4D6A] p-8 rounded-2xl shadow-xl text-white">
               <h2 className="text-xl font-bold mb-6 border-b border-white/20 pb-4 flex items-center gap-2">
                 Confirmation
@@ -1011,7 +997,6 @@ export default function ProposalFormPage() {
               </div>
             </section>
 
-            {/* BUTTONS */}
             <div className="flex flex-col sm:flex-row justify-end gap-4 mt-12 pt-8 border-t border-gray-200">
               <button
                 onClick={() => handleSave(false)}

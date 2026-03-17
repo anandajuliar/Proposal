@@ -17,7 +17,6 @@ export default function AdminOverviewPage() {
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // STATE CUSTOM MODAL
   const [dialog, setDialog] = useState({
     isOpen: false,
     title: "",
@@ -55,7 +54,6 @@ export default function AdminOverviewPage() {
   const fetchOverviewData = async (u: any) => {
     try {
       const userId = u.id_user || u.id;
-      // 🔵 DEV
       const res = await fetch(
         `http://localhost:3001/api/admin/overview?userId=${userId}&role=${u.role}`,
       );
@@ -106,7 +104,6 @@ export default function AdminOverviewPage() {
     );
   };
 
-  // 🚀 ACTION DELETE PROPOSAL
   const handleDeleteProposal = (proposalId: number) => {
     showConfirm(
       "Delete Proposal",
@@ -200,7 +197,6 @@ export default function AdminOverviewPage() {
   return (
     <AuthGuard>
       <div className="min-h-screen bg-[#f8fafc] font-sans text-gray-800 pb-20">
-        {/* CUSTOM MODAL */}
         {dialog.isOpen && (
           <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 transition-all">
             <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full border-t-4 border-[#D24A46] transform transition-all">
@@ -233,7 +229,6 @@ export default function AdminOverviewPage() {
           </div>
         )}
 
-        {/* NAVBAR */}
         <nav className="flex justify-between items-center px-8 py-4 bg-white shadow-sm border-b border-gray-100 text-sm sticky top-0 z-50">
           <div className="font-bold text-[#3B4D6A] text-xl tracking-wider flex items-center gap-3">
             <img
@@ -244,7 +239,7 @@ export default function AdminOverviewPage() {
             CONTRARIUS INSTITUTE
           </div>
           <div className="flex gap-8 items-center font-medium">
-            {/* 🚀 HANYA MUNCUL JIKA ROLE BUKAN "USER" */}
+
             {user?.role && user.role !== "USER" && (
               <span className="bg-[#D24A46] text-white px-3 py-1 rounded-full font-bold text-xs shadow-sm uppercase tracking-wider">
                 {user.role}
@@ -294,7 +289,6 @@ export default function AdminOverviewPage() {
             )}
           </div>
 
-          {/* SECTION 1: PROCEEDINGS */}
           <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 mb-10">
             <h2 className="text-2xl font-bold text-[#3B4D6A] mb-1">
               Proceedings
@@ -381,7 +375,6 @@ export default function AdminOverviewPage() {
             </div>
           </section>
 
-          {/* SECTION 2: PROPOSALS */}
           <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 mb-10">
             <h2 className="text-2xl font-bold text-[#3B4D6A] mb-1">
               Proposals
@@ -483,7 +476,6 @@ export default function AdminOverviewPage() {
             </div>
           </section>
 
-          {/* SECTION 3: DRAFT PROPOSALS */}
           {isUserOnly && (
             <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 mb-12">
               <h2 className="text-2xl font-bold text-[#3B4D6A] mb-1">
@@ -552,9 +544,6 @@ export default function AdminOverviewPage() {
             </section>
           )}
 
-          {/* ========================================================= */}
-          {/* BAGIAN KHUSUS SUPER ADMIN */}
-          {/* ========================================================= */}
           {user?.role === "SUPER ADMIN" && (
             <div className="mt-16 pt-12 border-t-2 border-dashed border-gray-300">
               <div className="mb-10 text-center">
@@ -563,7 +552,6 @@ export default function AdminOverviewPage() {
                 </span>
               </div>
 
-              {/* USER MANAGEMENT */}
               <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 mb-10">
                 <h3 className="text-xl font-bold text-[#3B4D6A] mb-6">
                   User Management
@@ -627,7 +615,6 @@ export default function AdminOverviewPage() {
                 </div>
               </section>
 
-              {/* EMAIL TEMPLATES */}
               <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
                 <h3 className="text-xl font-bold text-[#3B4D6A] mb-6">
                   Email Templates (Auto-Reply)
