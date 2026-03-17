@@ -1,8 +1,22 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { pool } from '../db';
+import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class AdminService {
+  private transporter;
+
+  constructor() {
+    // KONFIGURASI EMAIL REAL-TIME
+    this.transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: 'emailkamu@gmail.com', // GANTI: Email pengirim
+        pass: 'app_password_gmail_kamu', // GANTI: App Password dari Google
+      },
+    });
+  }
+
   async getOverview(userId: number, role: string) {
     try {
       let queryCondition = `LEFT JOIN users u ON p.id_user = u.id_user WHERE (u.is_deleted = 0 OR u.is_deleted IS NULL)`;
@@ -19,7 +33,10 @@ export class AdminService {
       );
 
       return {
-        proceedings: proceedingsRaw.filter((p: any) => p.status !== 'DRAFT'),
+        proceedings: proceedingsRaw.filter((p: any) => p.status === 'APPROVED'),
+        submitted: proceedingsRaw.filter(
+          (p: any) => p.status !== 'APPROVED' && p.status !== 'DRAFT',
+        ),
         drafts: proceedingsRaw.filter((p: any) => p.status === 'DRAFT'),
       };
     } catch (error) {
@@ -33,11 +50,9 @@ export class AdminService {
         `SELECT * FROM proceedings_proposals WHERE id = ?`,
         [id],
       );
-
       if (rows.length > 0) {
         const row = rows[0];
         let details = {};
-
         try {
           details =
             typeof row.form_details === 'string'
@@ -64,11 +79,26 @@ export class AdminService {
     }
   }
 
-  async saveProposal(body: any, status: string) {
+  async saveProposal(body: any, targetStatus: string) {
     const formDetailsJson = JSON.stringify(body.form_details || {});
 
     try {
       if (body.proposal_id) {
+        const [existing]: any = await pool.query(
+          `SELECT status FROM proceedings_proposals WHERE id = ?`,
+          [body.proposal_id],
+        );
+        let finalStatus = targetStatus;
+        if (existing.length > 0) {
+          const currentStatus = existing[0].status;
+          if (
+            currentStatus === 'APPROVED' ||
+            currentStatus === 'ON_REVIEW' ||
+            currentStatus === 'REJECTED'
+          ) {
+            finalStatus = currentStatus;
+          }
+        }
         await pool.query(
           `UPDATE proceedings_proposals SET organizer_name = ?, event_name = ?, acronym = ?, delivery_date = ?, status = ?, form_details = ? WHERE id = ?`,
           [
@@ -76,12 +106,12 @@ export class AdminService {
             body.event_name,
             body.acronym,
             body.delivery_date,
-            status,
+            finalStatus,
             formDetailsJson,
             body.proposal_id,
           ],
         );
-        return { message: `Proposal berhasil di-update menjadi ${status}!` };
+        return { message: `Proposal berhasil di-update!` };
       } else {
         await pool.query(
           `INSERT INTO proceedings_proposals (organizer_name, event_name, acronym, delivery_date, status, form_details, id_user) VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -90,17 +120,27 @@ export class AdminService {
             body.event_name,
             body.acronym,
             body.delivery_date,
-            status,
+            targetStatus,
             formDetailsJson,
             body.id_user,
           ],
         );
         return {
-          message: `Proposal baru berhasil disimpan sebagai ${status}!`,
+          message: `Proposal baru berhasil disimpan sebagai ${targetStatus}!`,
         };
       }
     } catch (error) {
       throw new InternalServerErrorException('Gagal menyimpan proposal.');
+    }
+  }
+
+  // 🚀 TAMBAHAN: Hapus Proposal
+  async deleteProposal(id: number) {
+    try {
+      await pool.query(`DELETE FROM proceedings_proposals WHERE id = ?`, [id]);
+      return { message: 'Proposal berhasil dihapus secara permanen!' };
+    } catch (error) {
+      throw new InternalServerErrorException('Gagal menghapus proposal.');
     }
   }
 
@@ -115,21 +155,26 @@ export class AdminService {
         `SELECT u.email FROM users u JOIN proceedings_proposals p ON u.id_user = p.id_user WHERE p.id = ?`,
         [proposalId],
       );
-
       const [templateRes]: any = await pool.query(
         `SELECT subject, body FROM email_templates WHERE status_trigger = ?`,
         [status],
       );
 
       if (userRes.length > 0 && templateRes.length > 0) {
-        console.log(`\n====================================`);
-        console.log(`📧 [DUMMY EMAIL SENT BY CONTRARIUS]`);
-        console.log(`To      : ${userRes[0].email}`);
-        console.log(`Subject : ${templateRes[0].subject}`);
-        console.log(`Body    : \n${templateRes[0].body}`);
-        console.log(`====================================\n`);
+        const targetEmail = userRes[0].email;
+        try {
+          await this.transporter.sendMail({
+            from: '"Contrarius Institute" <noreply@contrariusactus.com>',
+            to: targetEmail,
+            subject: templateRes[0].subject,
+            text: templateRes[0].body,
+          });
+          console.log(`✅ Real Email Sent to: ${targetEmail}`);
+        } catch (emailError) {
+          console.error(`❌ Gagal ngirim email ke ${targetEmail}:`, emailError);
+        }
       }
-      return { message: 'Status updated and email sent!' };
+      return { message: 'Status updated and notification email sent!' };
     } catch (error) {
       throw new InternalServerErrorException('Gagal update status proposal.');
     }
@@ -193,9 +238,6 @@ export class AdminService {
   }
 
   async validateLogout(userId: number) {
-    return {
-      message: 'Logout berhasil, sesi telah dihapus dari server.',
-      success: true,
-    };
+    return { message: 'Logout berhasil.', success: true };
   }
 }

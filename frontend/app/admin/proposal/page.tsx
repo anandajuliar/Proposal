@@ -64,6 +64,30 @@ export default function ProposalFormPage() {
   const [userRole, setUserRole] = useState("USER");
   const [user, setUser] = useState<any>(null);
 
+  // STATE CUSTOM MODAL
+  const [dialog, setDialog] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "alert",
+    onConfirm: () => {},
+  });
+  const closeDialog = () => setDialog({ ...dialog, isOpen: false });
+  const showConfirm = (title: string, message: string, onConfirm: () => void) =>
+    setDialog({ isOpen: true, title, message, type: "confirm", onConfirm });
+  const showAlert = (
+    title: string,
+    message: string,
+    onConfirmAction = closeDialog,
+  ) =>
+    setDialog({
+      isOpen: true,
+      title,
+      message,
+      type: "alert",
+      onConfirm: onConfirmAction,
+    });
+
   const initialFormState = {
     credentials_name: "",
     credentials_title: "",
@@ -137,17 +161,42 @@ export default function ProposalFormPage() {
       const parsedUser = JSON.parse(userStr);
       setUserRole(parsedUser.role);
       setUser(parsedUser);
+
+      // 🔥 LOGIKA ANTI-MALING YANG BENAR
+      if (parsedUser.role === "ADMIN") {
+        showAlert(
+          "Access Denied",
+          "Admin cannot create or edit proposals.",
+          () => {
+            closeDialog();
+            router.push("/admin");
+          },
+        );
+        return;
+      }
+
+      if (parsedUser.role === "SUPER ADMIN" && !proposalId) {
+        showAlert(
+          "Access Denied",
+          "Super Admin can only edit existing proposals. You cannot create a new one.",
+          () => {
+            closeDialog();
+            router.push("/admin");
+          },
+        );
+        return;
+      }
     }
 
     if (proposalId) {
+      // 🔵 DEVELOPMENT (Ubah ke API Server kalau mau Deploy)
       fetch(`http://localhost:3001/api/admin/proposals/${proposalId}`)
         .then((res) => res.json())
         .then((data) => {
-          if (Object.keys(data).length > 0) {
+          if (Object.keys(data).length > 0)
             setFormData((prev: any) => ({ ...prev, ...data }));
-          }
         })
-        .catch((err) => console.error("Gagal menarik data draft", err));
+        .catch((err) => console.error(err));
     } else {
       setFormData(initialFormState);
     }
@@ -166,13 +215,16 @@ export default function ProposalFormPage() {
       isSubmit &&
       (!formData.agreement_accepted || !formData.confirmation_correct)
     ) {
-      alert("Please check the confirmation boxes at the bottom.");
+      showAlert(
+        "Validation Error",
+        "Please accept all terms and check the confirmation boxes at the bottom before submitting.",
+      );
       return;
     }
 
     const payload = {
       proposal_id: proposalId,
-      id_user: user ? user.id_user : null,
+      id_user: user ? user.id_user || user.id : null,
       organizer_name:
         formData.main_organizer || formData.credentials_name || "Unknown",
       event_name: formData.event_name,
@@ -185,10 +237,8 @@ export default function ProposalFormPage() {
       const endpoint = isSubmit
         ? "/admin/proposals/submit"
         : "/admin/proposals/draft";
-
-      const url = `http://localhost:3001/api${endpoint}`;
-
-      const res = await fetch(url, {
+      // 🔵 DEVELOPMENT
+      const res = await fetch(`http://localhost:3001/api${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -196,46 +246,104 @@ export default function ProposalFormPage() {
 
       const result = await res.json();
       if (res.ok) {
-        alert(result.message);
-        router.push("/admin");
+        showAlert("Success", result.message, () => {
+          closeDialog();
+          router.push("/admin");
+        });
       } else {
-        alert(`Gagal: ${result.message}`);
+        showAlert("Error", `Failed: ${result.message}`);
       }
     } catch (error) {
-      alert("Gagal koneksi ke Backend!");
+      showAlert("Error", "Failed to connect to the backend server!");
     }
   };
 
   const handleLogout = () => {
-    if (window.confirm("Are you sure you want to logout?")) {
+    showConfirm("Logout", "Are you sure you want to logout?", () => {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       router.push("/login");
-    }
+    });
   };
+
+  // 🔥 CEGAH KEDIP UI: Jangan render form sama sekali kalau dia kena blokir
+  if (userRole === "ADMIN" || (userRole === "SUPER ADMIN" && !proposalId)) {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center">
+        {dialog.isOpen && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 transition-all">
+            <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full border-t-4 border-[#D24A46] transform transition-all">
+              <h3 className="text-2xl font-extrabold text-[#3B4D6A] mb-3">
+                {dialog.title}
+              </h3>
+              <p className="text-gray-600 mb-8 leading-relaxed text-sm">
+                {dialog.message}
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={dialog.onConfirm}
+                  className="px-5 py-2.5 bg-[#3B4D6A] text-white rounded-lg font-bold shadow-md hover:bg-[#2a374b] transition-colors text-sm uppercase tracking-wider"
+                >
+                  OK
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <AuthGuard>
       <div className="min-h-screen bg-[#f8fafc] font-sans text-gray-800 pb-20">
-        
-        {/* NAVBAR */}
+        {/* CUSTOM MODAL */}
+        {dialog.isOpen && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 transition-all">
+            <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full border-t-4 border-[#D24A46] transform transition-all">
+              <h3 className="text-2xl font-extrabold text-[#3B4D6A] mb-3">
+                {dialog.title}
+              </h3>
+              <p className="text-gray-600 mb-8 leading-relaxed text-sm">
+                {dialog.message}
+              </p>
+              <div className="flex justify-end gap-3">
+                {dialog.type === "confirm" && (
+                  <button
+                    onClick={closeDialog}
+                    className="px-5 py-2.5 rounded-lg font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 transition-colors text-sm uppercase tracking-wider"
+                  >
+                    Cancel
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    dialog.onConfirm();
+                    if (dialog.type === "alert") closeDialog();
+                  }}
+                  className="px-5 py-2.5 bg-[#3B4D6A] text-white rounded-lg font-bold shadow-md hover:bg-[#2a374b] transition-colors text-sm uppercase tracking-wider"
+                >
+                  {dialog.type === "confirm" ? "Yes, Proceed" : "OK"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <nav className="flex justify-between items-center px-8 py-4 bg-white shadow-sm border-b border-gray-100 text-sm sticky top-0 z-50">
           <div className="font-bold text-[#3B4D6A] text-xl tracking-wider flex items-center gap-3">
-            <img 
-              src="/icon.png" 
-              alt="Contrarius Logo" 
-              className="h-9 w-9 object-contain" 
+            <img
+              src="/icon.png"
+              alt="Contrarius Logo"
+              className="h-9 w-9 object-contain"
             />
             CONTRARIUS INSTITUTE
           </div>
           <div className="flex gap-8 items-center font-medium">
-            {/* Sekarang badge ini bakal muncul buat SEMUA role (termasuk USER) */}
-            {userRole && (
-              <span className="bg-[#D24A46] text-white px-3 py-1 rounded-full font-bold text-xs shadow-sm uppercase tracking-wider">
-                {userRole}
-              </span>
-            )}
-            <Link href="/admin" className="text-[#64748B] hover:text-[#3B4D6A] transition-colors duration-200">
+            <Link
+              href="/admin"
+              className="text-[#64748B] hover:text-[#3B4D6A] transition-colors duration-200"
+            >
               Overview
             </Link>
             <Link
@@ -260,18 +368,18 @@ export default function ProposalFormPage() {
           >
             ← Back to overview
           </Link>
-
           <div className="mb-10">
             <h1 className="text-4xl font-extrabold text-[#3B4D6A] tracking-tight mb-2">
               Proceedings proposal
             </h1>
             <p className="text-sm text-gray-500">
-              * Please note that all form fields are mandatory unless stated otherwise.
+              * Please note that all form fields are mandatory unless stated
+              otherwise.
             </p>
           </div>
 
           <div className="space-y-8">
-            {/* 1. YOUR CREDENTIALS */}
+            {/* CREDENTIALS */}
             <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-xl font-bold text-[#3B4D6A] mb-6 border-b border-gray-100 pb-4">
                 Your Credentials
@@ -324,7 +432,6 @@ export default function ProposalFormPage() {
               </div>
             </section>
 
-            {/* 2. SIGNATORY CREDENTIALS */}
             <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-xl font-bold text-[#3B4D6A] mb-6 border-b border-gray-100 pb-4">
                 Credentials of the person authorised to sign
@@ -367,7 +474,7 @@ export default function ProposalFormPage() {
               </div>
             </section>
 
-            {/* 3. EVENT DETAILS */}
+            {/* EVENT DETAILS */}
             <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-xl font-bold text-[#3B4D6A] mb-6 border-b border-gray-100 pb-4">
                 Event details
@@ -395,7 +502,6 @@ export default function ProposalFormPage() {
                   onChange={handleChange}
                 />
               </div>
-
               <TextAreaGroup
                 label="Main Organizer (University, Institute or Society)"
                 hint="Please fill in name and full address"
@@ -415,7 +521,6 @@ export default function ProposalFormPage() {
                 formData={formData}
                 onChange={handleChange}
               />
-
               <div className="mb-5">
                 <label className="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">
                   Conference type
@@ -434,7 +539,6 @@ export default function ProposalFormPage() {
                   </option>
                 </select>
               </div>
-
               <div className="grid grid-cols-2 gap-4 items-end">
                 <InputGroup
                   label="City"
@@ -464,7 +568,6 @@ export default function ProposalFormPage() {
                   onChange={handleChange}
                 />
               </div>
-
               <InputGroup
                 label="Expected delivery date of articles to Contrarius"
                 name="delivery_date"
@@ -503,7 +606,7 @@ export default function ProposalFormPage() {
               />
             </section>
 
-            {/* 4. AUDIENCE */}
+            {/* AUDIENCE */}
             <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-xl font-bold text-[#3B4D6A] mb-6 border-b border-gray-100 pb-4">
                 Audience
@@ -539,18 +642,20 @@ export default function ProposalFormPage() {
               </div>
             </section>
 
-            {/* 5. EDITORS AND REVIEW */}
+            {/* EDITORS AND REVIEW */}
             <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-xl font-bold text-[#3B4D6A] mb-6 border-b border-gray-100 pb-4">
                 Editors and review
               </h2>
               <p className="text-sm text-gray-500 mb-8 bg-[#f0f4f8] p-4 rounded-md border-l-4 border-[#3B4D6A]">
-                Names of the proceedings editor(s) whose names are
-                to appear on the Contrarius Portal and cover of the proceedings
-                volume as Editors:
+                Names of the proceedings editor(s) whose names are to appear on
+                the Contrarius Portal and cover of the proceedings volume as
+                Editors:
               </p>
 
-              <h3 className="font-bold text-lg mb-4 text-[#3B4D6A]">Editor 1</h3>
+              <h3 className="font-bold text-lg mb-4 text-[#3B4D6A]">
+                Editor 1
+              </h3>
               <div className="grid grid-cols-2 gap-4">
                 <InputGroup
                   label="First Name"
@@ -578,7 +683,6 @@ export default function ProposalFormPage() {
                 formData={formData}
                 onChange={handleChange}
               />
-
               <div className="mb-8">
                 <label className="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">
                   Is Corresponding?
@@ -595,7 +699,9 @@ export default function ProposalFormPage() {
                 </select>
               </div>
 
-              <h3 className="font-bold text-lg mb-4 text-[#3B4D6A] border-t border-gray-100 pt-8">Editor 2</h3>
+              <h3 className="font-bold text-lg mb-4 text-[#3B4D6A] border-t border-gray-100 pt-8">
+                Editor 2
+              </h3>
               <div className="grid grid-cols-2 gap-4">
                 <InputGroup
                   label="First Name"
@@ -623,7 +729,6 @@ export default function ProposalFormPage() {
                 formData={formData}
                 onChange={handleChange}
               />
-
               <div className="mb-8">
                 <label className="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">
                   Is Corresponding?
@@ -640,7 +745,9 @@ export default function ProposalFormPage() {
                 </select>
               </div>
 
-              <h3 className="font-bold text-lg mb-4 text-[#3B4D6A] border-t border-gray-100 pt-8">Other editors</h3>
+              <h3 className="font-bold text-lg mb-4 text-[#3B4D6A] border-t border-gray-100 pt-8">
+                Other editors
+              </h3>
               <TextAreaGroup
                 label="Details of other editors (if > 2)"
                 hint="Provide required info as above."
@@ -648,8 +755,9 @@ export default function ProposalFormPage() {
                 formData={formData}
                 onChange={handleChange}
               />
-
-              <h3 className="font-bold text-lg mb-4 text-[#3B4D6A] border-t border-gray-100 pt-8">Reviewers</h3>
+              <h3 className="font-bold text-lg mb-4 text-[#3B4D6A] border-t border-gray-100 pt-8">
+                Reviewers
+              </h3>
               <TextAreaGroup
                 label="Reviewer Details"
                 hint="Full Name, title, email, affiliation of at least three senior person(s) responsible for review."
@@ -657,7 +765,6 @@ export default function ProposalFormPage() {
                 formData={formData}
                 onChange={handleChange}
               />
-
               <div className="mt-4">
                 <label className="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">
                   Type of review:
@@ -684,7 +791,7 @@ export default function ProposalFormPage() {
               </div>
             </section>
 
-            {/* 6. PAPER SELECTION */}
+            {/* PAPER SELECTION */}
             <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-xl font-bold text-[#3B4D6A] mb-6 border-b border-gray-100 pb-4">
                 Paper selection
@@ -754,7 +861,7 @@ export default function ProposalFormPage() {
               />
             </section>
 
-            {/* 7. SCOPE AND PC */}
+            {/* SCOPE AND PC */}
             <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-xl font-bold text-[#3B4D6A] mb-6 border-b border-gray-100 pb-4">
                 Scope and PC
@@ -781,16 +888,19 @@ export default function ProposalFormPage() {
               />
             </section>
 
-            {/* 8. PRINT VERSION & PLAGIARISM */}
+            {/* PRINT VERSION & PLAGIARISM */}
             <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-xl font-bold text-[#3B4D6A] mb-4">
                 Additional Services
               </h2>
-              
               <div className="bg-[#f0f4f8] p-5 rounded-lg mb-6">
-                <h3 className="font-bold text-sm mb-2 text-[#3B4D6A] uppercase tracking-wider">Print version (optional)</h3>
+                <h3 className="font-bold text-sm mb-2 text-[#3B4D6A] uppercase tracking-wider">
+                  Print version (optional)
+                </h3>
                 <p className="text-sm text-gray-500 mb-4">
-                  Contrarius can provide a e-printable file of the whole proceedings books allowing organizers to print locally. (Cost: 1,000 euro).
+                  Contrarius can provide a e-printable file of the whole
+                  proceedings books allowing organizers to print locally. (Cost:
+                  1,000 euro).
                 </p>
                 <label className="flex items-start gap-3 cursor-pointer">
                   <input
@@ -801,15 +911,19 @@ export default function ProposalFormPage() {
                     className="mt-1 w-4 h-4 text-[#D24A46] focus:ring-[#D24A46] rounded border-gray-300"
                   />
                   <span className="text-sm font-medium text-gray-700">
-                    Yes, I want to receive print-ready files (including TOC and ISBN).
+                    Yes, I want to receive print-ready files (including TOC and
+                    ISBN).
                   </span>
                 </label>
               </div>
-
               <div className="bg-[#f0f4f8] p-5 rounded-lg">
-                <h3 className="font-bold text-sm mb-2 text-[#3B4D6A] uppercase tracking-wider">Pre-review plagiarism check (optional)</h3>
+                <h3 className="font-bold text-sm mb-2 text-[#3B4D6A] uppercase tracking-wider">
+                  Pre-review plagiarism check (optional)
+                </h3>
                 <p className="text-sm text-gray-500 mb-4">
-                  Check submitted papers on plagiarism before expert review. Avoid reviewing rejected papers. (Costs: 100 euro set up fee + 5 euro/paper).
+                  Check submitted papers on plagiarism before expert review.
+                  Avoid reviewing rejected papers. (Costs: 100 euro set up fee +
+                  5 euro/paper).
                 </p>
                 <label className="flex items-start gap-3 cursor-pointer">
                   <input
@@ -820,13 +934,14 @@ export default function ProposalFormPage() {
                     className="mt-1 w-4 h-4 text-[#D24A46] focus:ring-[#D24A46] rounded border-gray-300"
                   />
                   <span className="text-sm font-medium text-gray-700">
-                    Yes, I would like Contrarius to perform a pre-review plagiarism check.
+                    Yes, I would like Contrarius to perform a pre-review
+                    plagiarism check.
                   </span>
                 </label>
               </div>
             </section>
 
-            {/* 9. VARIOUS */}
+            {/* VARIOUS */}
             <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
               <h2 className="text-xl font-bold text-[#3B4D6A] mb-6 border-b border-gray-100 pb-4">
                 Various
@@ -843,20 +958,25 @@ export default function ProposalFormPage() {
                 <option value="">Choose a value</option>
                 <option value="Past collaboration">Past collaboration</option>
                 <option value="Advertisement">Advertisement</option>
-                <option value="From publisher editor">From publisher editor</option>
+                <option value="From publisher editor">
+                  From publisher editor
+                </option>
                 <option value="Internet search">Internet search</option>
-                <option value="From colleagues / peers">From colleagues / peers</option>
-                <option value="From publisher website">From publisher website</option>
+                <option value="From colleagues / peers">
+                  From colleagues / peers
+                </option>
+                <option value="From publisher website">
+                  From publisher website
+                </option>
                 <option value="Other">Other:</option>
               </select>
             </section>
 
-            {/* 10. CONFIRMATION */}
+            {/* CONFIRMATION */}
             <section className="bg-[#3B4D6A] p-8 rounded-2xl shadow-xl text-white">
               <h2 className="text-xl font-bold mb-6 border-b border-white/20 pb-4 flex items-center gap-2">
-               Confirmation
+                Confirmation
               </h2>
-              
               <div className="space-y-6">
                 <label className="flex gap-4 cursor-pointer items-start bg-white/5 p-4 rounded-lg hover:bg-white/10 transition-colors">
                   <input
@@ -867,10 +987,12 @@ export default function ProposalFormPage() {
                     className="mt-1 flex-shrink-0 w-5 h-5 text-[#D24A46] focus:ring-[#D24A46] rounded border-white/30 bg-transparent"
                   />
                   <span className="text-sm text-blue-100 leading-relaxed">
-                    Yes, I accept that the content of these proceedings will be distributed under the Creative Commons Attribution License 4.0. Note: all proceedings articles are “gold” open access. We will charge the organizer for the cost of publishing.
+                    Yes, I accept that the content of these proceedings will be
+                    distributed under the Creative Commons Attribution License
+                    4.0. Note: all proceedings articles are “gold” open access.
+                    We will charge the organizer for the cost of publishing.
                   </span>
                 </label>
-
                 <label className="flex gap-4 cursor-pointer items-start bg-white/5 p-4 rounded-lg hover:bg-white/10 transition-colors">
                   <input
                     type="checkbox"
@@ -880,7 +1002,10 @@ export default function ProposalFormPage() {
                     className="mt-1 flex-shrink-0 w-5 h-5 text-[#D24A46] focus:ring-[#D24A46] rounded border-white/30 bg-transparent"
                   />
                   <span className="text-sm text-blue-100 leading-relaxed">
-                    Hereby I confirm that all information provided is correct, the event will be a real conference/workshop, and all papers will go through rigorous peer review process before being sent to Contrarius.
+                    Hereby I confirm that all information provided is correct,
+                    the event will be a real conference/workshop, and all papers
+                    will go through rigorous peer review process before being
+                    sent to Contrarius.
                   </span>
                 </label>
               </div>
@@ -901,7 +1026,6 @@ export default function ProposalFormPage() {
                 SUBMIT PROPOSAL
               </button>
             </div>
-
           </div>
         </main>
       </div>

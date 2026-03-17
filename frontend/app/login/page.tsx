@@ -13,6 +13,27 @@ export default function AuthPage() {
     password: "",
   });
 
+  const [dialog, setDialog] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "alert",
+    onConfirm: () => {},
+  });
+  const closeDialog = () => setDialog({ ...dialog, isOpen: false });
+  const showAlert = (
+    title: string,
+    message: string,
+    onConfirmAction = closeDialog,
+  ) =>
+    setDialog({
+      isOpen: true,
+      title,
+      message,
+      type: "alert",
+      onConfirm: onConfirmAction,
+    });
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -24,6 +45,8 @@ export default function AuthPage() {
     const endpoint = isLogin ? "/auth/login" : "/auth/register";
 
     try {
+      // 🟢 PRODUCTION: const res = await fetch(`https://api.contrariusactus.com/api${endpoint}`, {
+      // 🔵 DEVELOPMENT:
       const res = await fetch(`http://localhost:3001/api${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -33,19 +56,21 @@ export default function AuthPage() {
       const data = await res.json();
 
       if (res.ok) {
-        alert(data.message);
         if (isLogin) {
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user));
           router.push("/admin");
         } else {
-          setIsLogin(true);
+          showAlert("Success", data.message, () => {
+            closeDialog();
+            setIsLogin(true);
+          });
         }
       } else {
-        alert(`Gagal: ${data.message}`);
+        showAlert("Failed", `Gagal: ${data.message}`);
       }
     } catch (error) {
-      alert("Gagal koneksi ke server Backend!");
+      showAlert("Network Error", "Gagal koneksi ke server Backend!");
     } finally {
       setLoading(false);
     }
@@ -53,22 +78,46 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center font-sans p-6">
-      
+      {/* CUSTOM MODAL */}
+      {dialog.isOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 transition-all">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full border-t-4 border-[#D24A46] transform transition-all">
+            <h3 className="text-2xl font-extrabold text-[#3B4D6A] mb-3">
+              {dialog.title}
+            </h3>
+            <p className="text-gray-600 mb-8 leading-relaxed text-sm">
+              {dialog.message}
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  dialog.onConfirm();
+                  if (dialog.type === "alert") closeDialog();
+                }}
+                className="px-5 py-2.5 bg-[#3B4D6A] text-white rounded-lg font-bold shadow-md hover:bg-[#2a374b] transition-colors text-sm uppercase tracking-wider"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col md:flex-row w-full max-w-5xl bg-white rounded-2xl shadow-2xl overflow-hidden min-h-[500px]">
         <div className="md:w-3/5 bg-[#D24A46] p-10 flex flex-col justify-center relative overflow-hidden">
-          
           <div className="flex flex-col md:flex-row items-center justify-center gap-10 z-10 h-full">
             <div className="relative flex-shrink-0 w-40 h-40 md:w-48 md:h-48 rounded-full bg-[#ffffff] shadow-[inset_6px_6px_12px_rgba(0,0,0,0.4),_inset_-6px_-6px_12px_rgba(255,255,255,0.08),_10px_10px_20px_rgba(0,0,0,0.3)] flex items-center justify-center p-6">
-              <img 
-                src="/icon.png" 
-                alt="Contrarius Big Logo" 
-                className="w-full h-full object-contain drop-shadow-2xl" 
+              <img
+                src="/icon.png"
+                alt="Contrarius Big Logo"
+                className="w-full h-full object-contain drop-shadow-2xl"
               />
             </div>
-
             <div className="flex flex-col text-white text-center md:text-left">
               <div className="flex items-center justify-center md:justify-start gap-3 mb-4">
-                <h1 className="text-3xl font-bold tracking-wider">CONTRARIUS</h1>
+                <h1 className="text-3xl font-bold tracking-wider">
+                  CONTRARIUS
+                </h1>
               </div>
               <p className="text-white text-lg leading-relaxed max-w-xs">
                 {isLogin
@@ -76,9 +125,7 @@ export default function AuthPage() {
                   : "Join us and start submitting your conference proceedings proposal."}
               </p>
             </div>
-
           </div>
-
           <p className="absolute bottom-6 left-10 text-sm text-white font-medium italic">
             "Part of Contrarius Actus Group"
           </p>
@@ -95,8 +142,6 @@ export default function AuthPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            
-            {/* Munculin Input Nama kalau lagi mode Register */}
             {!isLogin && (
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -118,7 +163,7 @@ export default function AuthPage() {
                   </label>
                   <input
                     type="text"
-                    name="firstname"
+                    name="lastname"
                     onChange={handleChange}
                     className="w-full bg-[#f0f4f8] text-gray-800 placeholder-gray-400 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-[#D24A46] transition-all"
                     placeholder="Last Name"
@@ -127,8 +172,6 @@ export default function AuthPage() {
                 </div>
               </div>
             )}
-            
-            {/* Input Email */}
             <div>
               <label className="block text-xs font-bold uppercase text-gray-600 mb-2 tracking-wider">
                 Email Address
@@ -142,8 +185,6 @@ export default function AuthPage() {
                 required
               />
             </div>
-            
-            {/* Input Password */}
             <div>
               <label className="block text-xs font-bold uppercase text-gray-600 mb-2 tracking-wider">
                 Password
@@ -157,8 +198,6 @@ export default function AuthPage() {
                 required
               />
             </div>
-            
-            {/* Tombol Submit */}
             <button
               type="submit"
               disabled={loading}
@@ -166,15 +205,13 @@ export default function AuthPage() {
             >
               {loading ? "Processing..." : isLogin ? "LOGIN" : "REGISTER"}
             </button>
-
           </form>
 
-          {/* Toggle Login/Register */}
           <div className="mt-8 text-center">
             <p className="text-sm text-gray-500">
               {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
               <button
-                type="button" // Biar gak ke-trigger submit form
+                type="button"
                 onClick={() => setIsLogin(!isLogin)}
                 className="text-[#D24A46] font-bold cursor-pointer hover:underline focus:outline-none"
               >
@@ -182,7 +219,6 @@ export default function AuthPage() {
               </button>
             </p>
           </div>
-
         </div>
       </div>
     </div>

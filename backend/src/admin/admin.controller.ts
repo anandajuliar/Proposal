@@ -48,6 +48,12 @@ export class AdminController {
     return this.adminService.updateProposalStatus(Number(id), body.status);
   }
 
+  // 🚀 TAMBAHAN: Hapus Proposal
+  @Delete('proposals/:id')
+  async deleteProposal(@Param('id') id: string) {
+    return this.adminService.deleteProposal(Number(id));
+  }
+
   @Post('logout')
   async logout(@Body() body: any) {
     if (!body.user_id) {
@@ -63,6 +69,7 @@ export class AdminController {
     return this.adminService.getProposalById(id);
   }
 
+  // --- SUPER ADMIN ROUTES ---
   @Get('users')
   async getUsers() {
     return this.adminService.getAllUsers();

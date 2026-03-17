@@ -17,6 +17,26 @@ export default function AdminOverviewPage() {
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // STATE CUSTOM MODAL
+  const [dialog, setDialog] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "alert",
+    onConfirm: () => {},
+  });
+  const closeDialog = () => setDialog({ ...dialog, isOpen: false });
+  const showConfirm = (title: string, message: string, onConfirm: () => void) =>
+    setDialog({ isOpen: true, title, message, type: "confirm", onConfirm });
+  const showAlert = (title: string, message: string) =>
+    setDialog({
+      isOpen: true,
+      title,
+      message,
+      type: "alert",
+      onConfirm: closeDialog,
+    });
+
   useEffect(() => {
     const userStr = localStorage.getItem("user");
     if (userStr) {
@@ -34,20 +54,16 @@ export default function AdminOverviewPage() {
 
   const fetchOverviewData = async (u: any) => {
     try {
-      // 🟢 PRODUCTION: const res = await fetch(`https://api.contrariusactus.com/api/admin/overview?userId=${u.id_user}&role=${u.role}`);
-      // 🔵 DEVELOPMENT:
+      const userId = u.id_user || u.id;
+      // 🔵 DEV
       const res = await fetch(
-        `http://localhost:3001/api/admin/overview?userId=${u.id_user}&role=${u.role}`,
+        `http://localhost:3001/api/admin/overview?userId=${userId}&role=${u.role}`,
       );
       if (res.ok) {
         const result = await res.json();
         setData({
-          proceedings: result.proceedings.filter(
-            (p: any) => p.status === "APPROVED",
-          ), // Sesuai kodingan awalmu
-          submitted: result.proceedings.filter(
-            (p: any) => p.status !== "APPROVED",
-          ), // Tampilkan yg submitted, on review, rejected di sini
+          proceedings: result.proceedings,
+          submitted: result.submitted,
           drafts: result.drafts,
         });
       }
@@ -59,71 +75,88 @@ export default function AdminOverviewPage() {
   };
 
   const fetchUsers = async () => {
-    // 🟢 PRODUCTION: const res = await fetch(`https://api.contrariusactus.com/api/admin/users`);
     const res = await fetch(`http://localhost:3001/api/admin/users`);
     if (res.ok) setUsers(await res.json());
   };
 
   const fetchTemplates = async () => {
-    // 🟢 PRODUCTION: const res = await fetch(`https://api.contrariusactus.com/api/admin/templates`);
     const res = await fetch(`http://localhost:3001/api/admin/templates`);
     if (res.ok) setTemplates(await res.json());
   };
 
-  const handleStatusChange = async (proposalId: number, newStatus: string) => {
-    if (
-      !window.confirm(
-        `Ubah status menjadi ${newStatus}? (Otomatis mengirim dummy email ke user)`,
-      )
-    )
-      return;
+  const handleStatusChange = (proposalId: number, newStatus: string) => {
+    showConfirm(
+      "Confirm Status Update",
+      `Ubah status menjadi ${newStatus}? (Otomatis mengirim email ke user)`,
+      async () => {
+        closeDialog();
+        const res = await fetch(
+          `http://localhost:3001/api/admin/proposals/${proposalId}/status`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: newStatus }),
+          },
+        );
+        if (res.ok) {
+          showAlert("Success", "Status updated successfully!");
+          fetchOverviewData(user);
+        }
+      },
+    );
+  };
 
-    // 🟢 PRODUCTION: const url = `https://api.contrariusactus.com/api/admin/proposals/${proposalId}/status`;
-    const url = `http://localhost:3001/api/admin/proposals/${proposalId}/status`;
-
-    const res = await fetch(url, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: newStatus }),
-    });
-    if (res.ok) {
-      alert("Status updated!");
-      fetchOverviewData(user);
-    }
+  // 🚀 ACTION DELETE PROPOSAL
+  const handleDeleteProposal = (proposalId: number) => {
+    showConfirm(
+      "Delete Proposal",
+      "Hapus proposal ini secara permanen? Data tidak bisa dikembalikan!",
+      async () => {
+        closeDialog();
+        const res = await fetch(
+          `http://localhost:3001/api/admin/proposals/${proposalId}`,
+          { method: "DELETE" },
+        );
+        if (res.ok) {
+          showAlert("Success", "Proposal berhasil dihapus!");
+          fetchOverviewData(user);
+        }
+      },
+    );
   };
 
   const handleRoleChange = async (userId: number, newRole: string) => {
-    // 🟢 PRODUCTION: const url = `https://api.contrariusactus.com/api/admin/users/${userId}/role`;
-    const url = `http://localhost:3001/api/admin/users/${userId}/role`;
-
-    const res = await fetch(url, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ role: newRole }),
-    });
+    const res = await fetch(
+      `http://localhost:3001/api/admin/users/${userId}/role`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: newRole }),
+      },
+    );
     if (res.ok) {
-      alert("Role updated!");
+      showAlert("Success", "Role updated!");
       fetchUsers();
     }
   };
 
-  const handleDeleteUser = async (userId: number) => {
-    if (
-      !window.confirm(
-        "Hapus user ini? (Data proposal akan tetap ada, tapi user tidak bisa login lagi)",
-      )
-    )
-      return;
-
-    // 🟢 PRODUCTION: const url = `https://api.contrariusactus.com/api/admin/users/${userId}`;
-    const url = `http://localhost:3001/api/admin/users/${userId}`;
-
-    const res = await fetch(url, { method: "DELETE" });
-    if (res.ok) {
-      alert("User deleted!");
-      fetchUsers();
-      fetchOverviewData(user);
-    }
+  const handleDeleteUser = (userId: number) => {
+    showConfirm(
+      "Delete User",
+      "Hapus user ini? (Data proposal akan tetap ada, tapi user tidak bisa login lagi)",
+      async () => {
+        closeDialog();
+        const res = await fetch(
+          `http://localhost:3001/api/admin/users/${userId}`,
+          { method: "DELETE" },
+        );
+        if (res.ok) {
+          showAlert("Success", "User deleted!");
+          fetchUsers();
+          fetchOverviewData(user);
+        }
+      },
+    );
   };
 
   const handleTemplateSave = async (
@@ -131,23 +164,20 @@ export default function AdminOverviewPage() {
     subject: string,
     body: string,
   ) => {
-    // 🟢 PRODUCTION: const url = `https://api.contrariusactus.com/api/admin/templates/${id}`;
-    const url = `http://localhost:3001/api/admin/templates/${id}`;
-
-    const res = await fetch(url, {
+    const res = await fetch(`http://localhost:3001/api/admin/templates/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ subject, body }),
     });
-    if (res.ok) alert("Template saved!");
+    if (res.ok) showAlert("Success", "Template saved!");
   };
 
   const handleLogout = () => {
-    if (window.confirm("Are you sure you want to logout?")) {
+    showConfirm("Logout", "Are you sure you want to logout?", () => {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       router.push("/login");
-    }
+    });
   };
 
   const formatDate = (dateString: string) => {
@@ -164,23 +194,59 @@ export default function AdminOverviewPage() {
       </div>
     );
 
+  const currentUserId = user?.id_user || user?.id;
+  const isUserOnly = user?.role === "USER";
+
   return (
     <AuthGuard>
       <div className="min-h-screen bg-[#f8fafc] font-sans text-gray-800 pb-20">
-        
+        {/* CUSTOM MODAL */}
+        {dialog.isOpen && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 transition-all">
+            <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full border-t-4 border-[#D24A46] transform transition-all">
+              <h3 className="text-2xl font-extrabold text-[#3B4D6A] mb-3">
+                {dialog.title}
+              </h3>
+              <p className="text-gray-600 mb-8 leading-relaxed text-sm">
+                {dialog.message}
+              </p>
+              <div className="flex justify-end gap-3">
+                {dialog.type === "confirm" && (
+                  <button
+                    onClick={closeDialog}
+                    className="px-5 py-2.5 rounded-lg font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 transition-colors text-sm uppercase tracking-wider"
+                  >
+                    Cancel
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    dialog.onConfirm();
+                    if (dialog.type === "alert") closeDialog();
+                  }}
+                  className="px-5 py-2.5 bg-[#3B4D6A] text-white rounded-lg font-bold shadow-md hover:bg-[#2a374b] transition-colors text-sm uppercase tracking-wider"
+                >
+                  {dialog.type === "confirm" ? "Yes, Proceed" : "OK"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* NAVBAR */}
         <nav className="flex justify-between items-center px-8 py-4 bg-white shadow-sm border-b border-gray-100 text-sm sticky top-0 z-50">
           <div className="font-bold text-[#3B4D6A] text-xl tracking-wider flex items-center gap-3">
-            <img 
-              src="/icon.png" 
-              alt="Contrarius Logo" 
-              className="h-9 w-9 object-contain" 
+            <img
+              src="/icon.png"
+              alt="Contrarius Logo"
+              className="h-9 w-9 object-contain"
             />
             CONTRARIUS INSTITUTE
           </div>
           <div className="flex gap-8 items-center font-medium">
-            {user?.role && (
-              <span className="bg-[#D24A46] text-white px-3 py-1 rounded-full font-bold text-xs shadow-sm">
+            {/* 🚀 HANYA MUNCUL JIKA ROLE BUKAN "USER" */}
+            {user?.role && user.role !== "USER" && (
+              <span className="bg-[#D24A46] text-white px-3 py-1 rounded-full font-bold text-xs shadow-sm uppercase tracking-wider">
                 {user.role}
               </span>
             )}
@@ -190,9 +256,14 @@ export default function AdminOverviewPage() {
             >
               Overview
             </Link>
-            <Link href="/admin/proposal" className="text-[#64748B] hover:text-[#3B4D6A] transition-colors duration-200">
-              Proceedings proposal
-            </Link>
+            {isUserOnly && (
+              <Link
+                href="/admin/proposal"
+                className="text-[#64748B] hover:text-[#3B4D6A] transition-colors duration-200"
+              >
+                Proceedings proposal
+              </Link>
+            )}
             <button
               onClick={handleLogout}
               className="bg-transparent border-2 border-[#D24A46] text-[#D24A46] px-5 py-1.5 rounded-md hover:bg-[#D24A46] hover:text-white transition-all duration-300 font-bold shadow-sm active:scale-95"
@@ -203,8 +274,6 @@ export default function AdminOverviewPage() {
         </nav>
 
         <main className="max-w-6xl mx-auto p-10 mt-4">
-          
-          {/* HEADER */}
           <div className="flex justify-between items-end mb-10 border-b border-gray-200 pb-6">
             <div>
               <h1 className="text-4xl font-extrabold text-[#3B4D6A] tracking-tight mb-2">
@@ -214,13 +283,15 @@ export default function AdminOverviewPage() {
                 Manage and track your proceeding proposals seamlessly.
               </p>
             </div>
-            
-            <Link
-              href="/admin/proposal"
-              className="bg-[#D24A46] text-white px-6 py-3 rounded-md hover:bg-[#b83e3a] font-bold shadow-lg hover:shadow-xl transition-all active:scale-95 flex items-center gap-2"
-            >
-              <span className="text-xl leading-none">+</span> New proceedings proposal
-            </Link>
+            {isUserOnly && (
+              <Link
+                href="/admin/proposal"
+                className="bg-[#D24A46] text-white px-6 py-3 rounded-md hover:bg-[#b83e3a] font-bold shadow-lg hover:shadow-xl transition-all active:scale-95 flex items-center gap-2"
+              >
+                <span className="text-xl leading-none">+</span> New proceedings
+                proposal
+              </Link>
+            )}
           </div>
 
           {/* SECTION 1: PROCEEDINGS */}
@@ -235,23 +306,44 @@ export default function AdminOverviewPage() {
               <table className="w-full text-left border-collapse text-sm">
                 <thead>
                   <tr className="border-b-2 border-gray-100">
-                    <th className="py-3 font-bold w-1/4 text-[#3B4D6A] uppercase tracking-wider text-xs">Code</th>
-                    <th className="py-3 font-bold w-2/4 text-[#3B4D6A] uppercase tracking-wider text-xs">Name</th>
-                    <th className="py-3 font-bold w-1/8 text-[#3B4D6A] uppercase tracking-wider text-xs">Status</th>
-                    <th className="py-3 font-bold w-1/8 text-[#3B4D6A] uppercase tracking-wider text-xs">Delivery date</th>
+                    <th className="py-3 font-bold w-1/4 text-[#3B4D6A] uppercase tracking-wider text-xs">
+                      Code
+                    </th>
+                    <th className="py-3 font-bold w-2/4 text-[#3B4D6A] uppercase tracking-wider text-xs">
+                      Name
+                    </th>
+                    <th className="py-3 font-bold w-1/8 text-[#3B4D6A] uppercase tracking-wider text-xs">
+                      Status
+                    </th>
+                    <th className="py-3 font-bold w-1/8 text-[#3B4D6A] uppercase tracking-wider text-xs">
+                      Delivery date
+                    </th>
+                    {user?.role === "SUPER ADMIN" && (
+                      <th className="py-3 font-bold w-1/8 text-[#3B4D6A] uppercase tracking-wider text-xs text-right">
+                        Action
+                      </th>
+                    )}
                   </tr>
                 </thead>
                 <tbody>
                   {data.proceedings.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="py-8 text-center text-gray-400 italic">
+                      <td
+                        colSpan={5}
+                        className="py-8 text-center text-gray-400 italic"
+                      >
                         No proceedings available.
                       </td>
                     </tr>
                   ) : (
                     data.proceedings.map((item: any) => (
-                      <tr key={item.id} className="border-b border-gray-50 hover:bg-[#f0f4f8] transition-colors">
-                        <td className="py-4 font-medium text-gray-600">{item.acronym || "-"}</td>
+                      <tr
+                        key={item.id}
+                        className="border-b border-gray-50 hover:bg-[#f0f4f8] transition-colors"
+                      >
+                        <td className="py-4 font-medium text-gray-600">
+                          {item.acronym || "-"}
+                        </td>
                         <td className="py-4 text-[#3B4D6A] font-bold">
                           {item.event_name}
                         </td>
@@ -265,6 +357,22 @@ export default function AdminOverviewPage() {
                             ? new Date(item.delivery_date).toLocaleDateString()
                             : "-"}
                         </td>
+                        {user?.role === "SUPER ADMIN" && (
+                          <td className="py-4 text-right">
+                            <Link
+                              href={`/admin/proposal?id=${item.id}`}
+                              className="text-[#D24A46] font-bold hover:underline mr-4"
+                            >
+                              Edit
+                            </Link>
+                            <button
+                              onClick={() => handleDeleteProposal(item.id)}
+                              className="text-red-500 font-bold hover:underline"
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        )}
                       </tr>
                     ))
                   )}
@@ -285,22 +393,41 @@ export default function AdminOverviewPage() {
               <table className="w-full text-left border-collapse text-sm">
                 <thead>
                   <tr className="border-b-2 border-gray-100">
-                    <th className="py-3 font-bold w-2/5 text-[#3B4D6A] uppercase tracking-wider text-xs">Event name</th>
-                    <th className="py-3 font-bold w-1/5 text-[#3B4D6A] uppercase tracking-wider text-xs">Organizer</th>
-                    <th className="py-3 font-bold w-1/5 text-[#3B4D6A] uppercase tracking-wider text-xs">Creation date</th>
-                    <th className="py-3 font-bold w-1/5 text-[#3B4D6A] uppercase tracking-wider text-xs">Status</th>
+                    <th className="py-3 font-bold w-2/5 text-[#3B4D6A] uppercase tracking-wider text-xs">
+                      Event name
+                    </th>
+                    <th className="py-3 font-bold w-1/5 text-[#3B4D6A] uppercase tracking-wider text-xs">
+                      Organizer
+                    </th>
+                    <th className="py-3 font-bold w-1/5 text-[#3B4D6A] uppercase tracking-wider text-xs">
+                      Creation date
+                    </th>
+                    <th className="py-3 font-bold w-1/5 text-[#3B4D6A] uppercase tracking-wider text-xs">
+                      Status
+                    </th>
+                    {user?.role === "SUPER ADMIN" && (
+                      <th className="py-3 font-bold w-1/8 text-[#3B4D6A] uppercase tracking-wider text-xs text-right">
+                        Action
+                      </th>
+                    )}
                   </tr>
                 </thead>
                 <tbody>
                   {data.submitted.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="py-8 text-center text-gray-400 italic">
+                      <td
+                        colSpan={5}
+                        className="py-8 text-center text-gray-400 italic"
+                      >
                         No submitted proposals.
                       </td>
                     </tr>
                   ) : (
                     data.submitted.map((item: any) => (
-                      <tr key={item.id} className="border-b border-gray-50 hover:bg-[#f0f4f8] transition-colors">
+                      <tr
+                        key={item.id}
+                        className="border-b border-gray-50 hover:bg-[#f0f4f8] transition-colors"
+                      >
                         <td className="py-4 text-[#3B4D6A] font-bold">
                           {item.event_name}
                         </td>
@@ -311,9 +438,7 @@ export default function AdminOverviewPage() {
                           {formatDate(item.created_at)}
                         </td>
                         <td className="py-4">
-                          {/* DROPDOWN UNTUK ADMIN/SUPER ADMIN, LABEL UNTUK USER BIASA */}
-                          {user?.role === "ADMIN" ||
-                          user?.role === "SUPER ADMIN" ? (
+                          {!isUserOnly ? (
                             <select
                               className="border border-gray-300 p-2 rounded-md bg-[#f0f4f8] text-xs font-bold w-full focus:outline-none focus:ring-2 focus:ring-[#3B4D6A] cursor-pointer"
                               value={item.status}
@@ -328,18 +453,28 @@ export default function AdminOverviewPage() {
                             </select>
                           ) : (
                             <span
-                              className={`px-3 py-1 text-xs font-bold rounded-full ${
-                                item.status === "APPROVED"
-                                  ? "bg-green-100 text-green-700"
-                                  : item.status === "REJECTED"
-                                    ? "bg-red-100 text-red-700"
-                                    : "bg-yellow-100 text-yellow-700"
-                              }`}
+                              className={`px-3 py-1 text-xs font-bold rounded-full ${item.status === "APPROVED" ? "bg-green-100 text-green-700" : item.status === "REJECTED" ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700"}`}
                             >
                               {item.status.replace("_", " ")}
                             </span>
                           )}
                         </td>
+                        {user?.role === "SUPER ADMIN" && (
+                          <td className="py-4 text-right">
+                            <Link
+                              href={`/admin/proposal?id=${item.id}`}
+                              className="text-[#D24A46] font-bold hover:underline mr-4"
+                            >
+                              Edit
+                            </Link>
+                            <button
+                              onClick={() => handleDeleteProposal(item.id)}
+                              className="text-red-500 font-bold hover:underline"
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        )}
                       </tr>
                     ))
                   )}
@@ -349,60 +484,73 @@ export default function AdminOverviewPage() {
           </section>
 
           {/* SECTION 3: DRAFT PROPOSALS */}
-          <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 mb-12">
-            <h2 className="text-2xl font-bold text-[#3B4D6A] mb-1">
-              Draft Proposals
-            </h2>
-            <p className="text-sm text-gray-500 mb-6">
-              List of drafted proposals
-            </p>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-sm">
-                <thead>
-                  <tr className="border-b-2 border-gray-100">
-                    <th className="py-3 font-bold w-[45%] text-[#3B4D6A] uppercase tracking-wider text-xs">Event name</th>
-                    <th className="py-3 font-bold w-[25%] text-[#3B4D6A] uppercase tracking-wider text-xs">Created By</th>
-                    <th className="py-3 font-bold w-[20%] text-[#3B4D6A] uppercase tracking-wider text-xs">Creation date</th>
-                    <th className="py-3 font-bold w-[10%] text-right text-[#3B4D6A] uppercase tracking-wider text-xs">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.drafts.length === 0 ? (
-                    <tr>
-                      <td colSpan={4} className="py-8 text-center text-gray-400 italic">
-                        No drafts available.
-                      </td>
+          {isUserOnly && (
+            <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 mb-12">
+              <h2 className="text-2xl font-bold text-[#3B4D6A] mb-1">
+                Draft Proposals
+              </h2>
+              <p className="text-sm text-gray-500 mb-6">
+                List of drafted proposals
+              </p>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-sm">
+                  <thead>
+                    <tr className="border-b-2 border-gray-100">
+                      <th className="py-3 font-bold w-[45%] text-[#3B4D6A] uppercase tracking-wider text-xs">
+                        Event name
+                      </th>
+                      <th className="py-3 font-bold w-[25%] text-[#3B4D6A] uppercase tracking-wider text-xs">
+                        Created By
+                      </th>
+                      <th className="py-3 font-bold w-[20%] text-[#3B4D6A] uppercase tracking-wider text-xs">
+                        Creation date
+                      </th>
+                      <th className="py-3 font-bold w-[10%] text-right text-[#3B4D6A] uppercase tracking-wider text-xs">
+                        Action
+                      </th>
                     </tr>
-                  ) : (
-                    data.drafts.map((item: any) => (
-                      <tr
-                        key={item.id}
-                        className="border-b border-gray-50 hover:bg-[#f0f4f8] transition-colors"
-                      >
-                        <td className="py-4 text-[#3B4D6A] font-bold">
-                          {item.event_name}
-                        </td>
-                        <td className="py-4 font-medium text-gray-600">
-                          {item.organizer_name || item.firstname}
-                        </td>
-                        <td className="py-4 text-gray-500 text-xs">
-                          {formatDate(item.created_at)}
-                        </td>
-                        <td className="py-4 text-right">
-                          <Link
-                            href={`/admin/proposal?id=${item.id}`}
-                            className="text-[#D24A46] font-bold hover:underline underline-offset-4"
-                          >
-                            Edit
-                          </Link>
+                  </thead>
+                  <tbody>
+                    {data.drafts.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={4}
+                          className="py-8 text-center text-gray-400 italic"
+                        >
+                          No drafts available.
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </section>
+                    ) : (
+                      data.drafts.map((item: any) => (
+                        <tr
+                          key={item.id}
+                          className="border-b border-gray-50 hover:bg-[#f0f4f8] transition-colors"
+                        >
+                          <td className="py-4 text-[#3B4D6A] font-bold">
+                            {item.event_name}
+                          </td>
+                          <td className="py-4 font-medium text-gray-600">
+                            {item.organizer_name || item.firstname}
+                          </td>
+                          <td className="py-4 text-gray-500 text-xs">
+                            {formatDate(item.created_at)}
+                          </td>
+                          <td className="py-4 text-right">
+                            <Link
+                              href={`/admin/proposal?id=${item.id}`}
+                              className="text-[#D24A46] font-bold hover:underline underline-offset-4"
+                            >
+                              Edit
+                            </Link>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
 
           {/* ========================================================= */}
           {/* BAGIAN KHUSUS SUPER ADMIN */}
@@ -424,15 +572,26 @@ export default function AdminOverviewPage() {
                   <table className="w-full text-left border-collapse text-sm">
                     <thead className="bg-[#f0f4f8]">
                       <tr>
-                        <th className="p-4 font-bold text-[#3B4D6A] uppercase tracking-wider text-xs rounded-tl-lg">Name</th>
-                        <th className="p-4 font-bold text-[#3B4D6A] uppercase tracking-wider text-xs">Email</th>
-                        <th className="p-4 font-bold text-[#3B4D6A] uppercase tracking-wider text-xs">Role</th>
-                        <th className="p-4 font-bold text-[#3B4D6A] uppercase tracking-wider text-xs text-right rounded-tr-lg">Action</th>
+                        <th className="p-4 font-bold text-[#3B4D6A] uppercase tracking-wider text-xs rounded-tl-lg">
+                          Name
+                        </th>
+                        <th className="p-4 font-bold text-[#3B4D6A] uppercase tracking-wider text-xs">
+                          Email
+                        </th>
+                        <th className="p-4 font-bold text-[#3B4D6A] uppercase tracking-wider text-xs">
+                          Role
+                        </th>
+                        <th className="p-4 font-bold text-[#3B4D6A] uppercase tracking-wider text-xs text-right rounded-tr-lg">
+                          Action
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
                       {users.map((u: any) => (
-                        <tr key={u.id_user} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                        <tr
+                          key={u.id_user}
+                          className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                        >
                           <td className="p-4 font-bold text-[#3B4D6A]">
                             {u.firstname} {u.lastname}
                           </td>
@@ -444,7 +603,7 @@ export default function AdminOverviewPage() {
                               onChange={(e) =>
                                 handleRoleChange(u.id_user, e.target.value)
                               }
-                              disabled={u.id_user === user.id_user}
+                              disabled={u.id_user === currentUserId}
                             >
                               <option value="USER">USER</option>
                               <option value="ADMIN">ADMIN</option>
@@ -452,7 +611,7 @@ export default function AdminOverviewPage() {
                             </select>
                           </td>
                           <td className="p-4 text-right">
-                            {u.id_user !== user.id_user && (
+                            {u.id_user !== currentUserId && (
                               <button
                                 onClick={() => handleDeleteUser(u.id_user)}
                                 className="bg-transparent border border-[#D24A46] text-[#D24A46] px-4 py-1.5 rounded-md text-xs font-bold hover:bg-[#D24A46] hover:text-white transition-all"
@@ -480,12 +639,16 @@ export default function AdminOverviewPage() {
                       className="border border-gray-200 p-6 rounded-xl bg-[#f0f4f8]"
                     >
                       <div className="flex justify-between items-center mb-4 border-b border-gray-300 pb-3">
-                        <span className="font-bold text-sm text-gray-500 uppercase">Trigger:</span>
+                        <span className="font-bold text-sm text-gray-500 uppercase">
+                          Trigger:
+                        </span>
                         <span className="bg-[#3B4D6A] text-white px-3 py-1 rounded text-xs font-bold tracking-wider">
                           {tpl.status_trigger}
                         </span>
                       </div>
-                      <label className="block text-xs font-bold text-gray-600 mb-1 uppercase tracking-wider">Subject</label>
+                      <label className="block text-xs font-bold text-gray-600 mb-1 uppercase tracking-wider">
+                        Subject
+                      </label>
                       <input
                         type="text"
                         defaultValue={tpl.subject}
@@ -493,7 +656,9 @@ export default function AdminOverviewPage() {
                         className="w-full bg-white text-[#3B4D6A] border border-gray-200 p-3 rounded-md mb-4 font-bold focus:outline-none focus:ring-2 focus:ring-[#D24A46]"
                         placeholder="Email Subject"
                       />
-                      <label className="block text-xs font-bold text-gray-600 mb-1 uppercase tracking-wider">Body Message</label>
+                      <label className="block text-xs font-bold text-gray-600 mb-1 uppercase tracking-wider">
+                        Body Message
+                      </label>
                       <textarea
                         defaultValue={tpl.body}
                         id={`body-${tpl.id}`}
@@ -502,19 +667,21 @@ export default function AdminOverviewPage() {
                         placeholder="Email Body"
                       ></textarea>
                       <button
-                        onClick={() => {
-                          const subj = (
-                            document.getElementById(
-                              `subj-${tpl.id}`,
-                            ) as HTMLInputElement
-                          ).value;
-                          const body = (
-                            document.getElementById(
-                              `body-${tpl.id}`,
-                            ) as HTMLTextAreaElement
-                          ).value;
-                          handleTemplateSave(tpl.id, subj, body);
-                        }}
+                        onClick={() =>
+                          handleTemplateSave(
+                            tpl.id,
+                            (
+                              document.getElementById(
+                                `subj-${tpl.id}`,
+                              ) as HTMLInputElement
+                            ).value,
+                            (
+                              document.getElementById(
+                                `body-${tpl.id}`,
+                              ) as HTMLTextAreaElement
+                            ).value,
+                          )
+                        }
                         className="w-full bg-[#3B4D6A] text-white px-4 py-3 rounded-md text-sm font-bold hover:bg-[#2a374b] transition-all shadow-md active:scale-95"
                       >
                         SAVE TEMPLATE
