@@ -8,10 +8,10 @@ export class AdminService {
 
   constructor() {
     this.transporter = nodemailer.createTransport({
-      service: 'gmail', 
+      service: 'gmail',
       auth: {
-        user: 'forms@contrariusactus.com', 
-        pass: 'hvfh bbxo mvft szjb',         
+        user: 'forms@contrariusactus.com',
+        pass: 'hvfh bbxo mvft szjb',
       },
     });
   }
@@ -150,10 +150,12 @@ export class AdminService {
         [status, proposalId],
       );
 
+      // 🔥 AMBIL DATA TAMBAHAN: Tarik nama user (firstname) dan nama event (event_name) dari database
       const [userRes]: any = await pool.query(
-        `SELECT u.email FROM users u JOIN proceedings_proposals p ON u.id_user = p.id_user WHERE p.id = ?`,
+        `SELECT u.email, u.firstname, p.event_name FROM users u JOIN proceedings_proposals p ON u.id_user = p.id_user WHERE p.id = ?`,
         [proposalId],
       );
+
       const [templateRes]: any = await pool.query(
         `SELECT subject, body FROM email_templates WHERE status_trigger = ?`,
         [status],
@@ -161,16 +163,28 @@ export class AdminService {
 
       if (userRes.length > 0 && templateRes.length > 0) {
         const targetEmail = userRes[0].email;
+        const userName = userRes[0].firstname; // Nama si User
+        const eventName = userRes[0].event_name || 'Your Event'; // Judul Paper/Event
+
+        // 🪄 MANTRA AJAIB: Ganti {{name}} dan {{event_name}} jadi data aslinya!
+        const finalSubject = templateRes[0].subject
+          .replace(/{{name}}/g, userName)
+          .replace(/{{event_name}}/g, eventName);
+
+        const finalBody = templateRes[0].body
+          .replace(/{{name}}/g, userName)
+          .replace(/{{event_name}}/g, eventName);
+
         try {
           await this.transporter.sendMail({
-            from: '"Contrarius Institute" <forms@contrariusactus.com>',
+            from: '"Contrarius Institute" <noreply@contrariusactus.com>', // Ubah sesuai selera
             to: targetEmail,
-            subject: templateRes[0].subject,
-            text: templateRes[0].body,
+            subject: finalSubject, // Pakai subject yang udah disulap
+            text: finalBody, // Pakai body yang udah disulap
           });
-          console.log(`✅ Real Email Sent to: ${targetEmail}`);
+          console.log(`Real Dynamic Email Sent to: ${targetEmail}`);
         } catch (emailError) {
-          console.error(`❌ Gagal ngirim email ke ${targetEmail}:`, emailError);
+          console.error(`Gagal ngirim email ke ${targetEmail}:`, emailError);
         }
       }
       return { message: 'Status updated and notification email sent!' };
