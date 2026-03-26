@@ -187,10 +187,9 @@ function ProposalFormContent() {
     }
 
     if (proposalId) {
-      // ✅ URL FETCH INI UDAH DIBERSIHIN DARI /api DI TENGAHNYA
-      fetch(
-        `https://api.form.contrariusactus.com/admin/proposals/${proposalId}`,
-      )
+      // const url = `https://api.form.contrariusactus.com/admin/proposals/${proposalId}`;
+      const url = `http://localhost:3001/admin/proposals/${proposalId}`;
+      fetch(url)
         .then((res) => res.json())
         .then((data) => {
           if (Object.keys(data).length > 0)
@@ -238,14 +237,14 @@ function ProposalFormContent() {
         ? "/admin/proposals/submit"
         : "/admin/proposals/draft";
 
-      const res = await fetch(
-        `https://api.form.contrariusactus.com${endpoint}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        },
-      );
+      // const url = `https://api.form.contrariusactus.com${endpoint}`;
+      const url = `http://localhost:3001${endpoint}`;
+
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
       const result = await res.json();
       if (res.ok) {

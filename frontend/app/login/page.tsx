@@ -45,17 +45,12 @@ export default function AuthPage() {
     const endpoint = isLogin ? "/auth/login" : "/auth/register";
 
     try {
-      // 🟢 PRODUCTION:
-      const res = await fetch(
-        `https://api.form.contrariusactus.com${endpoint}`,
-        {
-          // 🔵 DEVELOPMENT:
-          // const res = await fetch(`http://localhost:3001/api${endpoint}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
-        },
-      );
+      // const res = await fetch(`https://api.form.contrariusactus.com${endpoint}`, {
+      const res = await fetch(`http://localhost:3001${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
 
       const data = await res.json();
 
@@ -82,7 +77,6 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center font-sans p-6">
-      {/* CUSTOM MODAL */}
       {dialog.isOpen && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 transition-all">
           <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full border-t-4 border-[#D24A46] transform transition-all">

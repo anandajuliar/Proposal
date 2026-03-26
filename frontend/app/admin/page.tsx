@@ -54,8 +54,9 @@ export default function AdminOverviewPage() {
   const fetchOverviewData = async (u: any) => {
     try {
       const userId = u.id_user || u.id;
+      // const res = await fetch(`https://api.form.contrariusactus.com/admin/overview?userId=${userId}&role=${u.role}`);
       const res = await fetch(
-        `https://api.form.contrariusactus.com/admin/overview?userId=${userId}&role=${u.role}`,
+        `http://localhost:3001/admin/overview?userId=${userId}&role=${u.role}`,
       );
       if (res.ok) {
         const result = await res.json();
@@ -73,14 +74,14 @@ export default function AdminOverviewPage() {
   };
 
   const fetchUsers = async () => {
-    const res = await fetch(`https://api.form.contrariusactus.com/admin/users`);
+    // const res = await fetch(`https://api.form.contrariusactus.com/admin/users`);
+    const res = await fetch(`http://localhost:3001/admin/users`);
     if (res.ok) setUsers(await res.json());
   };
 
   const fetchTemplates = async () => {
-    const res = await fetch(
-      `https://api.form.contrariusactus.com/admin/templates`,
-    );
+    // const res = await fetch(`https://api.form.contrariusactus.com/admin/templates`);
+    const res = await fetch(`http://localhost:3001/admin/templates`);
     if (res.ok) setTemplates(await res.json());
   };
 
@@ -90,8 +91,9 @@ export default function AdminOverviewPage() {
       `Ubah status menjadi ${newStatus}? (Otomatis mengirim email ke user)`,
       async () => {
         closeDialog();
+        // const res = await fetch(`https://api.form.contrariusactus.com/admin/proposals/${proposalId}/status`, {
         const res = await fetch(
-          `https://api.form.contrariusactus.com/admin/proposals/${proposalId}/status`,
+          `http://localhost:3001/admin/proposals/${proposalId}/status`,
           {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
@@ -112,8 +114,9 @@ export default function AdminOverviewPage() {
       "Hapus proposal ini secara permanen? Data tidak bisa dikembalikan!",
       async () => {
         closeDialog();
+        // const res = await fetch(`https://api.form.contrariusactus.com/admin/proposals/${proposalId}`, { method: "DELETE" });
         const res = await fetch(
-          `https://api.form.contrariusactus.com/admin/proposals/${proposalId}`,
+          `http://localhost:3001/admin/proposals/${proposalId}`,
           { method: "DELETE" },
         );
         if (res.ok) {
@@ -125,8 +128,9 @@ export default function AdminOverviewPage() {
   };
 
   const handleRoleChange = async (userId: number, newRole: string) => {
+    // const res = await fetch(`https://api.form.contrariusactus.com/admin/users/${userId}/role`, {
     const res = await fetch(
-      `https://api.form.contrariusactus.com/admin/users/${userId}/role`,
+      `http://localhost:3001/admin/users/${userId}/role`,
       {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -145,8 +149,9 @@ export default function AdminOverviewPage() {
       "Hapus user ini? (Data proposal akan tetap ada, tapi user tidak bisa login lagi)",
       async () => {
         closeDialog();
+        // const res = await fetch(`https://api.form.contrariusactus.com/admin/users/${userId}`, { method: "DELETE" });
         const res = await fetch(
-          `https://api.form.contrariusactus.com/admin/users/${userId}`,
+          `http://localhost:3001/admin/users/${userId}`,
           { method: "DELETE" },
         );
         if (res.ok) {
@@ -163,8 +168,9 @@ export default function AdminOverviewPage() {
     subject: string,
     body: string,
   ) => {
+    // const res = await fetch(`https://api.form.contrariusactus.com/admin/templates/${id}`, {
     const res = await fetch(
-      `https://api.form.contrariusactus.com/admin/templates/${id}`,
+      `http://localhost:3001/admin/templates/${id}`,
       {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
