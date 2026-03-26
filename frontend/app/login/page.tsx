@@ -45,13 +45,17 @@ export default function AuthPage() {
     const endpoint = isLogin ? "/auth/login" : "/auth/register";
 
     try {
-      // 🟢 PRODUCTION: const res = await fetch(`https://api.contrariusactus.com/api${endpoint}`, {
-      // 🔵 DEVELOPMENT:
-      const res = await fetch(`http://localhost:3001/api${endpoint}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
+      // 🟢 PRODUCTION:
+      const res = await fetch(
+        `https://api.form.contrariusactus.com${endpoint}`,
+        {
+          // 🔵 DEVELOPMENT:
+          // const res = await fetch(`http://localhost:3001/api${endpoint}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        },
+      );
 
       const data = await res.json();
 

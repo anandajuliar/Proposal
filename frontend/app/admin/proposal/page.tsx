@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import AuthGuard from "../../../components/AuthGuard";
@@ -57,7 +57,7 @@ const TextAreaGroup = ({
   </div>
 );
 
-export default function ProposalFormPage() {
+function ProposalFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const proposalId = searchParams.get("id");
@@ -187,7 +187,10 @@ export default function ProposalFormPage() {
     }
 
     if (proposalId) {
-      fetch(`http://localhost:3001/api/admin/proposals/${proposalId}`)
+      // ✅ URL FETCH INI UDAH DIBERSIHIN DARI /api DI TENGAHNYA
+      fetch(
+        `https://api.form.contrariusactus.com/admin/proposals/${proposalId}`,
+      )
         .then((res) => res.json())
         .then((data) => {
           if (Object.keys(data).length > 0)
@@ -234,12 +237,15 @@ export default function ProposalFormPage() {
       const endpoint = isSubmit
         ? "/admin/proposals/submit"
         : "/admin/proposals/draft";
-      // 🔵 DEVELOPMENT
-      const res = await fetch(`http://localhost:3001/api${endpoint}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+
+      const res = await fetch(
+        `https://api.form.contrariusactus.com${endpoint}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        },
+      );
 
       const result = await res.json();
       if (res.ok) {
@@ -1015,5 +1021,19 @@ export default function ProposalFormPage() {
         </main>
       </div>
     </AuthGuard>
+  );
+}
+
+export default function ProposalFormPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center text-[#3B4D6A] font-bold">
+          Loading form...
+        </div>
+      }
+    >
+      <ProposalFormContent />
+    </Suspense>
   );
 }

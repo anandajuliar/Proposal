@@ -55,7 +55,7 @@ export default function AdminOverviewPage() {
     try {
       const userId = u.id_user || u.id;
       const res = await fetch(
-        `http://localhost:3001/api/admin/overview?userId=${userId}&role=${u.role}`,
+        `https://api.form.contrariusactus.com/admin/overview?userId=${userId}&role=${u.role}`,
       );
       if (res.ok) {
         const result = await res.json();
@@ -73,12 +73,14 @@ export default function AdminOverviewPage() {
   };
 
   const fetchUsers = async () => {
-    const res = await fetch(`http://localhost:3001/api/admin/users`);
+    const res = await fetch(`https://api.form.contrariusactus.com/admin/users`);
     if (res.ok) setUsers(await res.json());
   };
 
   const fetchTemplates = async () => {
-    const res = await fetch(`http://localhost:3001/api/admin/templates`);
+    const res = await fetch(
+      `https://api.form.contrariusactus.com/admin/templates`,
+    );
     if (res.ok) setTemplates(await res.json());
   };
 
@@ -89,7 +91,7 @@ export default function AdminOverviewPage() {
       async () => {
         closeDialog();
         const res = await fetch(
-          `http://localhost:3001/api/admin/proposals/${proposalId}/status`,
+          `https://api.form.contrariusactus.com/admin/proposals/${proposalId}/status`,
           {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
@@ -111,7 +113,7 @@ export default function AdminOverviewPage() {
       async () => {
         closeDialog();
         const res = await fetch(
-          `http://localhost:3001/api/admin/proposals/${proposalId}`,
+          `https://api.form.contrariusactus.com/admin/proposals/${proposalId}`,
           { method: "DELETE" },
         );
         if (res.ok) {
@@ -124,7 +126,7 @@ export default function AdminOverviewPage() {
 
   const handleRoleChange = async (userId: number, newRole: string) => {
     const res = await fetch(
-      `http://localhost:3001/api/admin/users/${userId}/role`,
+      `https://api.form.contrariusactus.com/admin/users/${userId}/role`,
       {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -144,7 +146,7 @@ export default function AdminOverviewPage() {
       async () => {
         closeDialog();
         const res = await fetch(
-          `http://localhost:3001/api/admin/users/${userId}`,
+          `https://api.form.contrariusactus.com/admin/users/${userId}`,
           { method: "DELETE" },
         );
         if (res.ok) {
@@ -161,11 +163,14 @@ export default function AdminOverviewPage() {
     subject: string,
     body: string,
   ) => {
-    const res = await fetch(`http://localhost:3001/api/admin/templates/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ subject, body }),
-    });
+    const res = await fetch(
+      `https://api.form.contrariusactus.com/admin/templates/${id}`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subject, body }),
+      },
+    );
     if (res.ok) showAlert("Success", "Template saved!");
   };
 
@@ -239,7 +244,6 @@ export default function AdminOverviewPage() {
             CONTRARIUS INSTITUTE
           </div>
           <div className="flex gap-8 items-center font-medium">
-
             {user?.role && user.role !== "USER" && (
               <span className="bg-[#D24A46] text-white px-3 py-1 rounded-full font-bold text-xs shadow-sm uppercase tracking-wider">
                 {user.role}
