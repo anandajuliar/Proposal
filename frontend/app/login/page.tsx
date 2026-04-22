@@ -45,7 +45,7 @@ export default function AuthPage() {
     const endpoint = isLogin ? "/auth/login" : "/auth/register";
 
     try {
-      // const res = await fetch(`https://api.form.contrariusactus.com${endpoint}`, {
+      //const res = await fetch(`https://api.form.contrariusactus.com${endpoint}`, {
       const res = await fetch(`http://localhost:3001${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

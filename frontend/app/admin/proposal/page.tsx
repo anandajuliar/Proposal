@@ -187,7 +187,7 @@ function ProposalFormContent() {
     }
 
     if (proposalId) {
-      // const url = `https://api.form.contrariusactus.com/admin/proposals/${proposalId}`;
+      //const url = `https://api.form.contrariusactus.com/admin/proposals/${proposalId}`;
       const url = `http://localhost:3001/admin/proposals/${proposalId}`;
       fetch(url)
         .then((res) => res.json())
@@ -237,7 +237,7 @@ function ProposalFormContent() {
         ? "/admin/proposals/submit"
         : "/admin/proposals/draft";
 
-      // const url = `https://api.form.contrariusactus.com${endpoint}`;
+      //const url = `https://api.form.contrariusactus.com${endpoint}`;
       const url = `http://localhost:3001${endpoint}`;
 
       const res = await fetch(url, {
